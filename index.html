@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Omnibus">
+<meta name="theme-color" content="#0f0e0d">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<title>Omnibus Vault</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0f0e0d;
+  --bg2: #1a1917;
+  --bg3: #242320;
+  --border: rgba(255,255,255,0.08);
+  --border2: rgba(255,255,255,0.15);
+  --text: #f0ede8;
+  --muted: #7a7773;
+  --accent: #e8a230;
+  --accent2: #c4421a;
+  --success: #4caf7d;
+  --danger: #e05555;
+  --font-display: 'Bebas Neue', sans-serif;
+  --font-body: 'DM Sans', sans-serif;
+  --r: 10px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-size:15px;min-height:100vh;overscroll-behavior:none}
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--bg3)}
+
+/* App shell */
+.app{display:flex;flex-direction:column;height:100vh;max-width:480px;margin:0 auto;position:relative}
+.topbar{padding:env(safe-area-inset-top, 12px) 16px 0;background:var(--bg)}
+.topbar-inner{display:flex;align-items:center;justify-content:space-between;padding-bottom:12px;border-bottom:1px solid var(--border)}
+.logo{font-family:var(--font-display);font-size:28px;letter-spacing:2px;color:var(--accent);line-height:1}
+.logo span{color:var(--muted);font-size:13px;font-family:var(--font-body);font-weight:300;letter-spacing:1px;display:block;margin-top:-2px}
+.topbar-right{display:flex;gap:8px}
+.icon-btn{width:36px;height:36px;border:1px solid var(--border2);border-radius:8px;background:var(--bg2);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text);font-size:18px}
+.icon-btn:active{background:var(--bg3)}
+
+/* Stats strip */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.stat{background:var(--bg);padding:10px 8px;text-align:center}
+.stat-n{font-family:var(--font-display);font-size:22px;color:var(--accent);letter-spacing:1px}
+.stat-l{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-top:1px}
+
+/* Filter bar */
+.filterbar{display:flex;gap:8px;padding:10px 16px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--border)}
+.filterbar::-webkit-scrollbar{display:none}
+.chip{flex-shrink:0;padding:5px 12px;border-radius:20px;border:1px solid var(--border2);background:transparent;color:var(--muted);font-family:var(--font-body);font-size:12px;cursor:pointer;transition:all .15s}
+.chip.active{background:var(--accent);border-color:var(--accent);color:#0f0e0d;font-weight:500}
+
+/* Sort row */
+.sortrow{display:flex;align-items:center;gap:8px;padding:8px 16px 6px;border-bottom:1px solid var(--border)}
+.sort-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;flex-shrink:0}
+select.sort-select{background:transparent;border:none;color:var(--muted);font-size:12px;font-family:var(--font-body);cursor:pointer;appearance:none;padding-right:14px}
+
+/* Book list */
+.list{flex:1;overflow-y:auto;padding:8px 16px 100px}
+.book-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);margin-bottom:10px;overflow:hidden;position:relative}
+.book-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--pub-color,var(--border2))}
+.book-main{display:flex;align-items:flex-start;gap:12px;padding:12px 12px 10px 16px}
+.book-info{flex:1;min-width:0}
+.book-title{font-weight:500;font-size:14px;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text)}
+.book-meta{display:flex;align-items:center;gap:6px;margin-top:5px;flex-wrap:wrap}
+.pub-badge{font-size:10px;padding:2px 7px;border-radius:4px;font-weight:500;border:1px solid}
+.cond-badge{font-size:10px;padding:2px 7px;border-radius:4px;color:var(--muted);border:1px solid var(--border2)}
+.read-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.book-price-col{text-align:right;flex-shrink:0}
+.price-paid{font-size:11px;color:var(--muted)}
+.price-market{font-size:15px;font-weight:500;color:var(--success)}
+.price-diff{font-size:10px;margin-top:1px}
+.price-lookup-btn{font-size:11px;padding:4px 8px;border-radius:6px;border:1px solid var(--border2);background:var(--bg3);color:var(--muted);cursor:pointer;white-space:nowrap}
+.price-lookup-btn:active{background:var(--bg)}
+.price-loading{font-size:11px;color:var(--muted);font-style:italic}
+
+.book-footer{border-top:1px solid var(--border);padding:7px 12px 7px 16px;display:flex;align-items:center;justify-content:space-between}
+.date-tag{font-size:11px;color:var(--muted)}
+.book-actions{display:flex;gap:6px}
+.action-btn{font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid var(--border2);background:transparent;color:var(--muted);cursor:pointer}
+.action-btn.del{border-color:rgba(224,85,85,0.3);color:var(--danger)}
+.action-btn:active{background:var(--bg3)}
+
+/* Empty */
+.empty{text-align:center;padding:60px 20px;color:var(--muted)}
+.empty-icon{font-size:48px;margin-bottom:12px;opacity:0.3}
+.empty-text{font-size:14px;line-height:1.6}
+
+/* FAB */
+.fab{position:fixed;bottom:calc(env(safe-area-inset-bottom, 0px) + 20px);right:20px;width:56px;height:56px;border-radius:50%;background:var(--accent);border:none;color:#0f0e0d;font-size:28px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 20px rgba(232,162,48,0.4);z-index:100;transition:transform .15s}
+.fab:active{transform:scale(0.94)}
+
+/* Drawer */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:200;opacity:0;pointer-events:none;transition:opacity .25s}
+.overlay.open{opacity:1;pointer-events:all}
+.drawer{position:fixed;bottom:0;left:50%;transform:translateX(-50%) translateY(100%);width:100%;max-width:480px;background:var(--bg2);border-radius:16px 16px 0 0;z-index:201;transition:transform .3s cubic-bezier(.32,.72,0,1);padding-bottom:env(safe-area-inset-bottom, 16px)}
+.drawer.open{transform:translateX(-50%) translateY(0)}
+.drawer-handle{width:36px;height:4px;border-radius:2px;background:var(--border2);margin:10px auto 4px}
+.drawer-title{font-family:var(--font-display);font-size:22px;letter-spacing:1px;color:var(--accent);padding:8px 20px 14px}
+.drawer-body{padding:0 20px;max-height:70vh;overflow-y:auto}
+.field{margin-bottom:14px}
+.field label{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:6px}
+.field input,.field select,.field textarea{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-family:var(--font-body);font-size:15px;padding:10px 12px}
+.field input:focus,.field select:focus{outline:none;border-color:var(--accent)}
+.field select option{background:var(--bg3)}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.submit-btn{width:100%;padding:14px;background:var(--accent);border:none;border-radius:var(--r);color:#0f0e0d;font-family:var(--font-display);font-size:20px;letter-spacing:2px;cursor:pointer;margin:16px 0 8px;transition:opacity .15s}
+.submit-btn:active{opacity:0.85}
+
+/* Toast */
+.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:10px 18px;font-size:13px;color:var(--text);z-index:500;opacity:0;transition:opacity .25s;white-space:nowrap;pointer-events:none}
+.toast.show{opacity:1}
+
+/* Publisher colors */
+.pub-marvel{--pub-color:#e23636;color:#e23636;border-color:rgba(226,54,54,0.3)}
+.pub-dc{--pub-color:#0476f2;color:#0476f2;border-color:rgba(4,118,242,0.3)}
+.pub-image{--pub-color:#4caf7d;color:#4caf7d;border-color:rgba(76,175,125,0.3)}
+.pub-dh{--pub-color:#e8a230;color:#e8a230;border-color:rgba(232,162,48,0.3)}
+.pub-other{--pub-color:#7a7773;color:#7a7773;border-color:rgba(122,119,115,0.3)}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="topbar">
+    <div class="topbar-inner">
+      <div class="logo">OMNIBUS VAULT<span>Collection Tracker</span></div>
+      <div class="topbar-right">
+        <div class="icon-btn" onclick="exportCSV()" title="Export CSV">⬇</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="stats" id="stats"></div>
+
+  <div class="filterbar" id="filterbar">
+    <div class="chip active" data-pub="" onclick="setFilter(this,'')">All</div>
+    <div class="chip" data-pub="Marvel" onclick="setFilter(this,'Marvel')">Marvel</div>
+    <div class="chip" data-pub="DC" onclick="setFilter(this,'DC')">DC</div>
+    <div class="chip" data-pub="Image" onclick="setFilter(this,'Image')">Image</div>
+    <div class="chip" data-pub="Dark Horse" onclick="setFilter(this,'Dark Horse')">Dark Horse</div>
+    <div class="chip" data-pub="Other" onclick="setFilter(this,'Other')">Other</div>
+    <div class="chip" data-pub="__unread__" onclick="setFilter(this,'__unread__')">Unread</div>
+  </div>
+
+  <div class="sortrow">
+    <span class="sort-label">Sort</span>
+    <select class="sort-select" id="sort-select" onchange="render()">
+      <option value="added">Date added</option>
+      <option value="title">Title A–Z</option>
+      <option value="paid">Price paid</option>
+      <option value="market">Market value</option>
+      <option value="date">Purchase date</option>
+    </select>
+  </div>
+
+  <div class="list" id="list"></div>
+</div>
+
+<button class="fab" onclick="openDrawer()" aria-label="Add book">+</button>
+
+<div class="overlay" id="overlay" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-handle"></div>
+  <div class="drawer-title" id="drawer-title">ADD BOOK</div>
+  <div class="drawer-body">
+    <input type="hidden" id="edit-id">
+    <div class="field">
+      <label>Title</label>
+      <input id="f-title" placeholder="e.g. Saga Omnibus Vol. 1" autocomplete="off">
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Publisher</label>
+        <select id="f-pub">
+          <option>Marvel</option>
+          <option>DC</option>
+          <option>Image</option>
+          <option>Dark Horse</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Condition</label>
+        <select id="f-cond">
+          <option value="NM">NM (Near Mint)</option>
+          <option value="VF">VF (Very Fine)</option>
+          <option value="FN">FN (Fine)</option>
+          <option value="VG">VG (Very Good)</option>
+          <option value="GD">GD (Good)</option>
+          <option value="Read">Read Copy</option>
+        </select>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Paid ($)</label>
+        <input id="f-paid" type="number" placeholder="0.00" step="0.01" inputmode="decimal">
+      </div>
+      <div class="field">
+        <label>Purchase Date</label>
+        <input id="f-date" type="date">
+      </div>
+    </div>
+    <div class="field">
+      <label>Read Status</label>
+      <select id="f-read">
+        <option value="unread">Unread</option>
+        <option value="reading">Currently Reading</option>
+        <option value="read">Read</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Notes (optional)</label>
+      <input id="f-notes" placeholder="e.g. Signed edition, gift, etc.">
+    </div>
+    <button class="submit-btn" id="submit-btn" onclick="submitBook()">ADD TO VAULT</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let books = [];
+let filterPub = '';
+const STORAGE_KEY = 'omnibus_vault_v2';
+
+// Storage helpers
+function saveBooks() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(books)); } catch(e) {}
+}
+function loadBooks() {
+  try {
+    const d = localStorage.getItem(STORAGE_KEY);
+    if (d) books = JSON.parse(d);
+  } catch(e) { books = []; }
+}
+
+function toast(msg, dur=2200) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._t);
+  t._t = setTimeout(() => t.classList.remove('show'), dur);
+}
+
+// Drawer
+let editingId = null;
+function openDrawer(id=null) {
+  editingId = id;
+  const btn = document.getElementById('submit-btn');
+  const title = document.getElementById('drawer-title');
+  if (id) {
+    const b = books.find(x => x.id === id);
+    if (!b) return;
+    document.getElementById('f-title').value = b.title;
+    document.getElementById('f-pub').value = b.pub;
+    document.getElementById('f-cond').value = b.cond || 'NM';
+    document.getElementById('f-paid').value = b.paid || '';
+    document.getElementById('f-date').value = b.purchaseDate || '';
+    document.getElementById('f-read').value = b.readStatus || 'unread';
+    document.getElementById('f-notes').value = b.notes || '';
+    title.textContent = 'EDIT BOOK';
+    btn.textContent = 'SAVE CHANGES';
+  } else {
+    document.getElementById('f-title').value = '';
+    document.getElementById('f-pub').value = 'Marvel';
+    document.getElementById('f-cond').value = 'NM';
+    document.getElementById('f-paid').value = '';
+    document.getElementById('f-date').value = new Date().toISOString().split('T')[0];
+    document.getElementById('f-read').value = 'unread';
+    document.getElementById('f-notes').value = '';
+    title.textContent = 'ADD BOOK';
+    btn.textContent = 'ADD TO VAULT';
+  }
+  document.getElementById('overlay').classList.add('open');
+  document.getElementById('drawer').classList.add('open');
+  setTimeout(() => document.getElementById('f-title').focus(), 350);
+}
+function closeDrawer() {
+  document.getElementById('overlay').classList.remove('open');
+  document.getElementById('drawer').classList.remove('open');
+}
+
+function submitBook() {
+  const title = document.getElementById('f-title').value.trim();
+  if (!title) { toast('Enter a title'); return; }
+  const data = {
+    title,
+    pub: document.getElementById('f-pub').value,
+    cond: document.getElementById('f-cond').value,
+    paid: parseFloat(document.getElementById('f-paid').value) || 0,
+    purchaseDate: document.getElementById('f-date').value,
+    readStatus: document.getElementById('f-read').value,
+    notes: document.getElementById('f-notes').value.trim(),
+  };
+  if (editingId) {
+    const idx = books.findIndex(x => x.id === editingId);
+    if (idx !== -1) { books[idx] = { ...books[idx], ...data }; }
+    toast('Updated');
+  } else {
+    books.unshift({ id: Date.now(), added: Date.now(), market: null, fetching: false, ...data });
+    toast('Added: ' + title);
+  }
+  closeDrawer();
+  saveBooks();
+  render();
+}
+
+function deleteBook(id) {
+  if (!confirm('Remove this book?')) return;
+  books = books.filter(b => b.id !== id);
+  saveBooks();
+  render();
+  toast('Removed');
+}
+
+// Publisher helpers
+function pubKey(pub) {
+  if (pub === 'Marvel') return 'marvel';
+  if (pub === 'DC') return 'dc';
+  if (pub === 'Image') return 'image';
+  if (pub === 'Dark Horse') return 'dh';
+  return 'other';
+}
+
+// Read status
+function readIcon(s) {
+  if (s === 'read') return { dot:'var(--success)', label:'Read' };
+  if (s === 'reading') return { dot:'var(--accent)', label:'Reading' };
+  return { dot:'var(--border2)', label:'Unread' };
+}
+
+// Price lookup
+async function fetchPrice(id) {
+  const b = books.find(x => x.id === id);
+  if (!b || b.fetching) return;
+  b.fetching = true;
+  render();
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        tools: [{ type: 'web_search_20250305', name: 'web_search' }],
+        system: 'You are a comic book price research assistant. Search eBay completed/sold listings and return ONLY a JSON object with one key "price" (number in USD, float). No markdown, no explanation. If price not found, return {"price": null}.',
+        messages: [{ role: 'user', content: `Average sold eBay price for: "${b.title}" (${b.pub} omnibus). Return only JSON: {"price": 89.99}` }]
+      })
+    });
+    const data = await res.json();
+    const text = (data.content || []).filter(c => c.type === 'text').map(c => c.text).join('');
+    const m = text.match(/\{\s*"price"\s*:\s*([\d.]+|null)\s*\}/);
+    b.market = m ? JSON.parse(m[0]).price : null;
+  } catch(e) { b.market = null; }
+  b.fetching = false;
+  saveBooks();
+  render();
+}
+
+// Filters
+function setFilter(el, val) {
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  filterPub = val;
+  render();
+}
+
+// Render
+function render() {
+  const sort = document.getElementById('sort-select').value;
+  let list = [...books];
+  if (filterPub === '__unread__') list = list.filter(b => b.readStatus !== 'read');
+  else if (filterPub) list = list.filter(b => b.pub === filterPub);
+
+  if (sort === 'title') list.sort((a,b) => a.title.localeCompare(b.title));
+  else if (sort === 'paid') list.sort((a,b) => b.paid - a.paid);
+  else if (sort === 'market') list.sort((a,b) => (b.market||0) - (a.market||0));
+  else if (sort === 'date') list.sort((a,b) => (b.purchaseDate||'').localeCompare(a.purchaseDate||''));
+  else list.sort((a,b) => b.added - a.added);
+
+  const container = document.getElementById('list');
+
+  if (!list.length) {
+    container.innerHTML = `<div class="empty"><div class="empty-icon">📚</div><div class="empty-text">${books.length ? 'No books match this filter' : 'Your vault is empty.<br>Tap + to add your first omnibus.'}</div></div>`;
+  } else {
+    container.innerHTML = list.map(b => {
+      const pk = pubKey(b.pub);
+      const rs = readIcon(b.readStatus || 'unread');
+      const diff = b.market !== null ? b.market - b.paid : null;
+      const diffColor = diff === null ? '' : diff >= 0 ? 'var(--success)' : 'var(--danger)';
+      const diffStr = diff === null ? '' : `${diff >= 0 ? '+' : ''}$${Math.abs(diff).toFixed(2)}`;
+      const dateStr = b.purchaseDate ? new Date(b.purchaseDate + 'T12:00:00').toLocaleDateString('en-US', {month:'short',day:'numeric',year:'numeric'}) : '';
+      const priceBlock = b.fetching
+        ? `<div class="price-loading">Searching…</div>`
+        : b.market !== null
+          ? `<div class="price-market">$${b.market.toFixed(2)}</div><div class="price-diff" style="color:${diffColor}">${diffStr}</div>`
+          : `<button class="price-lookup-btn" onclick="fetchPrice(${b.id})">Look up ↗</button>`;
+      return `
+<div class="book-card pub-${pk}">
+  <div class="book-main">
+    <div class="book-info">
+      <div class="book-title">${escHtml(b.title)}</div>
+      <div class="book-meta">
+        <span class="pub-badge pub-${pk}">${b.pub}</span>
+        <span class="cond-badge">${b.cond || 'NM'}</span>
+        <span class="read-dot" style="background:${rs.dot}" title="${rs.label}"></span>
+        <span style="font-size:10px;color:var(--muted)">${rs.label}</span>
+      </div>
+      ${b.notes ? `<div style="font-size:11px;color:var(--muted);margin-top:5px;font-style:italic">${escHtml(b.notes)}</div>` : ''}
+    </div>
+    <div class="book-price-col">
+      ${b.paid > 0 ? `<div class="price-paid">Paid $${b.paid.toFixed(2)}</div>` : '<div class="price-paid">No price</div>'}
+      ${priceBlock}
+    </div>
+  </div>
+  <div class="book-footer">
+    <span class="date-tag">${dateStr || 'No date'}</span>
+    <div class="book-actions">
+      <button class="action-btn" onclick="openDrawer(${b.id})">Edit</button>
+      <button class="action-btn del" onclick="deleteBook(${b.id})">Remove</button>
+    </div>
+  </div>
+</div>`;
+    }).join('');
+  }
+
+  // Stats
+  const totalPaid = books.reduce((s,b) => s + (b.paid||0), 0);
+  const priced = books.filter(b => b.market !== null);
+  const totalMarket = priced.reduce((s,b) => s + b.market, 0);
+  const readCount = books.filter(b => b.readStatus === 'read').length;
+  document.getElementById('stats').innerHTML = `
+    <div class="stat"><div class="stat-n">${books.length}</div><div class="stat-l">Books</div></div>
+    <div class="stat"><div class="stat-n">$${totalPaid < 10000 ? totalPaid.toFixed(0) : (totalPaid/1000).toFixed(1)+'k'}</div><div class="stat-l">Paid</div></div>
+    <div class="stat"><div class="stat-n" style="color:${totalMarket > 0 ? 'var(--success)' : 'var(--accent)'}">$${priced.length ? (totalMarket < 10000 ? totalMarket.toFixed(0) : (totalMarket/1000).toFixed(1)+'k') : '—'}</div><div class="stat-l">Market</div></div>
+    <div class="stat"><div class="stat-n">${readCount}</div><div class="stat-l">Read</div></div>
+  `;
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function exportCSV() {
+  if (!books.length) { toast('Nothing to export'); return; }
+  const rows = [['Title','Publisher','Condition','Paid','Market Price','Difference','Read Status','Purchase Date','Notes']];
+  books.forEach(b => {
+    const diff = b.market !== null ? (b.market - b.paid).toFixed(2) : '';
+    rows.push([
+      `"${b.title.replace(/"/g,'""')}"`,
+      b.pub, b.cond || '',
+      b.paid.toFixed(2),
+      b.market !== null ? b.market.toFixed(2) : '',
+      diff,
+      b.readStatus || '',
+      b.purchaseDate || '',
+      `"${(b.notes||'').replace(/"/g,'""')}"`
+    ]);
+  });
+  const csv = rows.map(r => r.join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download = 'omnibus_vault.csv';
+  a.click();
+  toast('CSV exported');
+}
+
+// SW registration
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+
+loadBooks();
+render();
+</script>
+</body>
+</html>

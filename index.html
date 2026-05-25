@@ -253,10 +253,12 @@ async function startScanner(){
   try{
     if(typeof ZXing==='undefined'){setScanStatus('Loading scanner…',true);await loadZXing();}
     codeReader=new ZXing.BrowserMultiFormatReader();
-    const devices=await ZXing.BrowserMultiFormatReader.listVideoInputDevices();
-    // prefer back camera
-    const back=devices.find(d=>/(back|rear|environment)/i.test(d.label))||devices[devices.length-1];
-    const deviceId=back?back.deviceId:undefined;
+    const mediaDevices = await navigator.mediaDevices.enumerateDevices();
+    const devices = mediaDevices.filter(d => d.kind === 'videoinput');
+        // prefer back camera
+   const back = devices.find(d => /(back|rear|environment)/i.test(d.label)) || devices[devices.length - 1];
+   const deviceId = back ? back.deviceId : undefined;
+    
     const video=document.getElementById('scanner-video');
     await codeReader.decodeFromVideoDevice(deviceId,video,async(result,err)=>{
       if(result){

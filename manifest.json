@@ -2,7 +2,7 @@
   "name": "Omnibus Vault",
   "short_name": "Omnibus",
   "description": "Comic omnibus collection tracker with live pricing",
-  "start_url": "/",
+  "start_url": "/Omnibus-vault/",
   "display": "standalone",
   "background_color": "#0f0e0d",
   "theme_color": "#0f0e0d",
@@ -27,7 +27,7 @@
       "name": "Add Book",
       "short_name": "Add",
       "description": "Add a new omnibus",
-      "url": "/?action=add"
+      "url": "/Omnibus-vault/?action=add"
     }
   ]
 }

@@ -147,11 +147,13 @@ select.sort-select{background:transparent;border:none;color:var(--muted);font-si
   <div class="list" id="list"></div>
 </div>
 
+<!-- FABs -->
 <div class="fab-group">
   <div class="fab fab-scan" onclick="startScanner()" title="Scan barcode">📷</div>
   <div class="fab fab-main" onclick="openDrawer()" title="Add manually">+</div>
 </div>
 
+<!-- Scanner overlay -->
 <div class="scanner-overlay hidden" id="scanner-overlay">
   <div class="scanner-header">
     <span class="scanner-title">SCAN ISBN</span>
@@ -165,6 +167,7 @@ select.sort-select{background:transparent;border:none;color:var(--muted);font-si
   <div class="scan-hint">Point camera at the barcode on the back cover.<br>Works best in good lighting.</div>
 </div>
 
+<!-- Drawer -->
 <div class="overlay" id="overlay" onclick="closeDrawer()"></div>
 <div class="drawer" id="drawer">
   <div class="drawer-handle"></div>
@@ -223,6 +226,7 @@ select.sort-select{background:transparent;border:none;color:var(--muted);font-si
 
 <div class="toast" id="toast"></div>
 
+<!-- ZXing barcode library -->
 <script src="https://unpkg.com/@zxing/library@0.19.1/umd/index.min.js"></script>
 <script>
 let books = [];
@@ -248,15 +252,11 @@ async function startScanner(){
   setScanStatus('');
   try{
     if(typeof ZXing==='undefined'){setScanStatus('Loading scanner…',true);await loadZXing();}
-    
-    codeReader = new ZXing.BrowserMultiFormatReader();
-    const mediaDevices = await navigator.mediaDevices.enumerateDevices();
-    const devices = mediaDevices.filter(d => d.kind === 'videoinput');
-    
+    codeReader=new ZXing.BrowserMultiFormatReader();
+    const devices=await ZXing.BrowserMultiFormatReader.listVideoInputDevices();
     // prefer back camera
-    const back = devices.find(d => /(back|rear|environment)/i.test(d.label)) || devices[devices.length - 1];
-    const deviceId = back ? back.deviceId : undefined;
-    
+    const back=devices.find(d=>/(back|rear|environment)/i.test(d.label))||devices[devices.length-1];
+    const deviceId=back?back.deviceId:undefined;
     const video=document.getElementById('scanner-video');
     await codeReader.decodeFromVideoDevice(deviceId,video,async(result,err)=>{
       if(result){

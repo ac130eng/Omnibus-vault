@@ -97,4 +97,94 @@ select.sort-select{background:transparent;border:none;color:var(--muted);font-si
 .submit-btn:active{opacity:0.85}
 .toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:10px 18px;font-size:13px;color:var(--text);z-index:500;opacity:0;transition:opacity .25s;white-space:nowrap;pointer-events:none;max-width:90vw;text-align:center}
 .toast.show{opacity:1}
-.pub-marvel{--pub-color:#e23636;color:#e23636;border-color:rgba(
+.pub-marvel{--pub-color:#e23636;color:#e23636;border-color:rgba(226,54,54,0.3)}
+.pub-dc{--pub-color:#0476f2;color:#0476f2;border-color:rgba(4,118,242,0.3)}
+.pub-image{--pub-color:#4caf7d;color:#4caf7d;border-color:rgba(76,175,125,0.3)}
+.pub-dh{--pub-color:#e8a230;color:#e8a230;border-color:rgba(232,162,48,0.3)}
+.pub-other{--pub-color:#7a7773;color:#7a7773;border-color:rgba(122,119,115,0.3)}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <div class="topbar-inner">
+      <div class="logo">OMNIBUS VAULT<span>Collection Tracker</span></div>
+      <div class="icon-btn" onclick="exportCSV()">&#8595;</div>
+    </div>
+  </div>
+  <div class="stats" id="stats"></div>
+  <div class="filterbar">
+    <div class="chip active" onclick="setFilter(this,'')">All</div>
+    <div class="chip" onclick="setFilter(this,'Marvel')">Marvel</div>
+    <div class="chip" onclick="setFilter(this,'DC')">DC</div>
+    <div class="chip" onclick="setFilter(this,'Image')">Image</div>
+    <div class="chip" onclick="setFilter(this,'Dark Horse')">Dark Horse</div>
+    <div class="chip" onclick="setFilter(this,'Other')">Other</div>
+    <div class="chip" onclick="setFilter(this,'__unread__')">Unread</div>
+  </div>
+  <div class="sortrow">
+    <span class="sort-label">Sort</span>
+    <select class="sort-select" id="sort-select" onchange="render()">
+      <option value="added">Date added</option>
+      <option value="title">Title A-Z</option>
+      <option value="paid">Price paid</option>
+      <option value="market">Market value</option>
+      <option value="date">Purchase date</option>
+    </select>
+  </div>
+  <div class="list" id="list"></div>
+</div>
+
+<div class="fab-group">
+  <div class="fab fab-scan" onclick="startScanner()">&#128247;</div>
+  <div class="fab fab-main" onclick="openDrawer()">+</div>
+</div>
+
+<div class="scanner-overlay hidden" id="scanner-overlay">
+  <div class="scanner-header">
+    <span class="scanner-title">SCAN ISBN</span>
+    <button class="scanner-close" onclick="stopScanner()">&#10005;</button>
+  </div>
+  <video id="scanner-video" playsinline muted></video>
+  <div class="scan-frame"><div class="scan-line"></div></div>
+  <div class="scan-status" id="scan-status"></div>
+  <div class="scan-hint">Point camera at the barcode on the back cover</div>
+  <button class="manual-isbn-btn" onclick="manualISBN()">Enter ISBN manually</button>
+</div>
+
+<div class="overlay" id="overlay" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-handle"></div>
+  <div class="drawer-title">
+    <span id="drawer-title-text">ADD BOOK</span>
+    <span class="isbn-badge" id="isbn-badge" style="display:none"></span>
+  </div>
+  <div class="drawer-body">
+    <div class="field">
+      <label>Title</label>
+      <input id="f-title" placeholder="e.g. Daredevil Omnibus Vol. 4" autocomplete="off">
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Publisher</label>
+        <select id="f-pub">
+          <option>Marvel</option><option>DC</option><option>Image</option>
+          <option>Dark Horse</option><option>Other</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Condition</label>
+        <select id="f-cond">
+          <option value="NM">NM (Near Mint)</option>
+          <option value="VF">VF (Very Fine)</option>
+          <option value="FN">FN (Fine)</option>
+          <option value="VG">VG (Very Good)</option>
+          <option value="GD">GD (Good)</option>
+          <option value="Read">Read Copy</option>
+        </select>
+      </div>
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>Paid ($)</label>
+        <input id="f-paid" type="number" placeholder="0.00" step="0.01" inputmode="decimal">

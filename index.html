@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -20,6 +21,7 @@ body{background:var(--bg);color:var(--text);font-family:sans-serif;margin:0}
 .drawer.open{transform:translateY(0)}
 .field{margin-bottom:15px}
 input{width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:10px;border-radius:4px;box-sizing:border-box}
+.lookup-btn{background:var(--bg3);border:1px solid var(--accent);color:var(--accent);padding:10px;width:100%;border-radius:4px;margin-bottom:10px;cursor:pointer}
 </style>
 </head>
 <body>
@@ -37,6 +39,8 @@ input{width:100%;background:var(--bg3);border:1px solid var(--border);color:var(
 <div class="fab" onclick="document.getElementById('drawer').classList.add('open')">+</div>
 
 <div class="drawer" id="drawer">
+  <div class="field"><input placeholder="ISBN" id="f-isbn"></div>
+  <button class="lookup-btn" onclick="lookupBook()">LOOKUP ISBN</button>
   <div class="field"><input placeholder="Title" id="f-title"></div>
   <button class="fab" style="position:static;width:100%;border-radius:4px" onclick="submitBook()">ADD BOOK</button>
 </div>
@@ -44,24 +48,34 @@ input{width:100%;background:var(--bg3);border:1px solid var(--border);color:var(
 <script>
   var books = [];
   var STORAGE_KEY = 'omnibus_vault_v2';
+  var API_KEY = '30f046987e90f2358dc14168e985fb44df9d9f22'; // Loaded from your verified key
 
-  function loadBooks() { 
-    try { 
-      var d = localStorage.getItem(STORAGE_KEY); 
-      if(d) books = JSON.parse(d); 
-    } catch(e) { books = []; } 
-  }
-
-  function saveBooks() { 
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(books)); } catch(e) {} 
+  function lookupBook() {
+    var isbn = document.getElementById('f-isbn').value.trim();
+    if(!isbn) { alert('Enter ISBN'); return; }
+    
+    var url = 'https://comicvine.gamespot.com/api/issues/?api_key=' + API_KEY + '&format=json&filter=isbn:' + isbn;
+    
+    fetch('https://api.allorigins.win/get?url=' + encodeURIComponent(url))
+      .then(res => res.json())
+      .then(data => {
+        var json = JSON.parse(data.contents);
+        if(json.results && json.results.length > 0) {
+          document.getElementById('f-title').value = json.results[0].name;
+        } else {
+          alert('Not found');
+        }
+      })
+      .catch(e => alert('Error connecting to database'));
   }
 
   function submitBook() {
     var title = document.getElementById('f-title').value.trim();
-    if(!title) return;
+    if(!title) { alert('Enter a title'); return; }
     books.unshift({ id: Date.now(), title: title });
-    saveBooks();
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(books));
     document.getElementById('f-title').value = '';
+    document.getElementById('f-isbn').value = '';
     document.getElementById('drawer').classList.remove('open');
     render();
   }
@@ -69,12 +83,13 @@ input{width:100%;background:var(--bg3);border:1px solid var(--border);color:var(
   function render() {
     var list = document.getElementById('list');
     document.getElementById('stat-count').innerText = books.length;
-    list.innerHTML = books.map(function(b) {
-      return '<div style="background:#1a1917;padding:10px;margin-bottom:5px;border-radius:4px">' + b.title + '</div>';
-    }).join('');
+    list.innerHTML = books.map(b => 
+      '<div style="background:#1a1917;padding:15px;margin-bottom:8px;border-radius:4px;border-left:4px solid #e8a230">' + b.title + '</div>'
+    ).join('');
   }
 
-  loadBooks();
+  var d = localStorage.getItem(STORAGE_KEY);
+  if(d) books = JSON.parse(d);
   render();
 </script>
 </body>

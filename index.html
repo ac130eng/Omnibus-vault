@@ -255,7 +255,6 @@ function startScanner() {
     qrScannerInstance = new Html5Qrcode("scanner-preview");
   }
 
-  // Force specific EAN_13 reading to skip secondary printing barcodes
   const config = {
     fps: 24,
     qrbox: { width: 280, height: 140 },
@@ -267,7 +266,6 @@ function startScanner() {
     { facingMode: "environment" },
     config,
     (decodedText) => {
-      // Validate trade retail numeric layouts
       if (/^(978|979|079)\d+/.test(decodedText) && decodedText.length >= 12) {
         stopScanner();
         lookupISBN(decodedText);
@@ -361,10 +359,16 @@ function openDrawer(id = null, prefill = null){
     document.getElementById('f-read').value = 'unread';
     document.getElementById('f-notes').value = '';
     lookupWrapper.style.display = 'block';
+    
+    // Explicitly lock the scanned ISBN parameter directly into the active state variables
     if(prefill?.isbn){
-      badge.textContent = 'ISBN ' + prefill.isbn; badge.style.display = 'inline';
       scannedISBN = prefill.isbn;
-    } else { badge.style.display = 'none'; scannedISBN = null; }
+      badge.textContent = 'ISBN ' + scannedISBN; 
+      badge.style.display = 'inline';
+    } else { 
+      badge.style.display = 'none'; 
+      scannedISBN = null; 
+    }
     titleEl.childNodes[0].textContent = 'ADD BOOK ';
     btn.textContent = 'ADD TO VAULT';
   }

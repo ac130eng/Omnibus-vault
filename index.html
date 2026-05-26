@@ -52,7 +52,6 @@ select.sort-select{background:transparent;border:none;color:var(--muted);font-si
 .price-market{font-size:15px;font-weight:500;color:var(--success)}
 .price-diff{font-size:10px;margin-top:1px}
 .price-lookup-btn{font-size:11px;padding:4px 8px;border-radius:6px;border:1px solid var(--border2);background:var(--bg3);color:var(--muted);cursor:pointer;white-space:nowrap;text-decoration:none;display:inline-block}
-.price-loading{font-size:11px;color:var(--muted);font-style:italic}
 .book-footer{border-top:1px solid var(--border);padding:7px 12px 7px 16px;display:flex;align-items:center;justify-content:space-between}
 .date-tag{font-size:11px;color:var(--muted)}
 .book-actions{display:flex;gap:6px}
@@ -76,15 +75,11 @@ select.sort-select{background:transparent;border:none;color:var(--muted);font-si
 .scanner-header{position:absolute;top:0;left:0;right:0;padding:env(safe-area-inset-top,16px) 16px 16px;display:flex;align-items:center;justify-content:space-between;background:linear-gradient(to bottom,rgba(0,0,0,0.8),transparent);z-index:310}
 .scanner-title{font-family:var(--font-display);font-size:22px;letter-spacing:2px;color:var(--accent)}
 .scanner-close{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.15);border:none;color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center}
-#scanner-container{width:100%;height:100%;position:relative}
-#scanner-container video{width:100%;height:100%;object-fit:cover}
-#scanner-container canvas{position:absolute;top:0;left:0;display:none}
+#scanner-preview{width:100%;height:100%;object-fit:cover}
 .scan-frame{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:280px;height:140px;border:2px solid var(--accent);border-radius:8px;box-shadow:0 0 0 9999px rgba(0,0,0,0.65);z-index:305;pointer-events:none}
 .scan-line{position:absolute;width:100%;height:2px;background:var(--accent);opacity:0.8;top:10px;animation:scanline 2.2s ease-in-out infinite}
 @keyframes scanline{0%,100%{top:10px}50%{top:128px}}
 .scan-hint{position:absolute;bottom:calc(env(safe-area-inset-bottom,0px) + 40px);color:rgba(255,255,255,0.7);font-size:13px;text-align:center;padding:0 32px;line-height:1.5;z-index:310}
-.scan-status{position:absolute;bottom:calc(env(safe-area-inset-bottom,0px) + 100px);background:rgba(0,0,0,0.85);border:1px solid var(--border2);border-radius:8px;padding:8px 16px;color:var(--text);font-size:13px;display:none;z-index:310}
-.scan-status.show{display:block}
 
 /* Drawer */
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:200;opacity:0;pointer-events:none;transition:opacity .25s}
@@ -92,15 +87,19 @@ select.sort-select{background:transparent;border:none;color:var(--muted);font-si
 .drawer{position:fixed;bottom:0;left:50%;transform:translateX(-50%) translateY(100%);width:100%;max-width:480px;background:var(--bg2);border-radius:16px 16px 0 0;z-index:201;transition:transform .3s cubic-bezier(.32,.72,0,1);padding-bottom:env(safe-area-inset-bottom,16px)}
 .drawer.open{transform:translateX(-50%) translateY(0)}
 .drawer-handle{width:36px;height:4px;border-radius:2px;background:var(--border2);margin:10px auto 4px}
-.drawer-title{font-family:var(--font-display);font-size:22px;letter-spacing:1px;color:var(--accent);padding:8px 20px 14px;display:flex;align-items:center;gap:10px}
+.drawer-title{font-family:var(--font-display);font-size:22px;letter-spacing:1px;color:var(--accent);padding:8px 20px 14px;display:flex;align-items:center;justify-content:space-between}
 .isbn-badge{font-size:11px;font-family:var(--font-body);background:rgba(232,162,48,0.15);border:1px solid rgba(232,162,48,0.3);color:var(--accent);padding:3px 8px;border-radius:4px;letter-spacing:0}
 .drawer-body{padding:0 20px;max-height:70vh;overflow-y:auto}
-.field {margin-bottom:14px}
+.field{margin-bottom:14px}
 .field label{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:6px}
 .field input,.field select{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-family:var(--font-body);font-size:15px;padding:10px 12px}
 .field input:focus,.field select:focus{outline:none;border-color:var(--accent)}
 .field select option{background:var(--bg3)}
 .field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.lookup-row{display:flex;gap:8px}
+.lookup-row input{flex:1}
+.lookup-btn{padding:10px 14px;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;color:var(--muted);font-size:13px;cursor:pointer;white-space:nowrap;flex-shrink:0}
+.lookup-btn:active{background:var(--bg)}
 .submit-btn{width:100%;padding:14px;background:var(--accent);border:none;border-radius:var(--r);color:#0f0e0d;font-family:var(--font-display);font-size:20px;letter-spacing:2px;cursor:pointer;margin:16px 0 8px;transition:opacity .15s}
 .submit-btn:active{opacity:0.85}
 .toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:10px 18px;font-size:13px;color:var(--text);z-index:500;opacity:0;transition:opacity .25s;white-space:nowrap;pointer-events:none}
@@ -157,12 +156,11 @@ select.sort-select{background:transparent;border:none;color:var(--muted);font-si
     <span class="scanner-title">SCAN BARCODE</span>
     <button class="scanner-close" onclick="stopScanner()">✕</button>
   </div>
-  <div id="scanner-container"></div>
+  <div id="scanner-preview"></div>
   <div class="scan-frame">
     <div class="scan-line"></div>
   </div>
-  <div class="scan-status" id="scan-status"></div>
-  <div class="scan-hint">Center the main barcode inside the box.<br>Avoid reflections and bright glares.</div>
+  <div class="scan-hint">Center the barcode inside the box.<br>Tilt slightly to clear gloss reflections.</div>
 </div>
 
 <div class="overlay" id="overlay" onclick="closeDrawer()"></div>
@@ -171,6 +169,15 @@ select.sort-select{background:transparent;border:none;color:var(--muted);font-si
   <div class="drawer-title" id="drawer-title">ADD BOOK <span class="isbn-badge" id="isbn-badge" style="display:none"></span></div>
   <div class="drawer-body">
     <input type="hidden" id="edit-id">
+    
+    <div class="field" id="lookup-wrapper">
+      <label>Barcode / ISBN Lookup</label>
+      <div class="lookup-row">
+        <input id="f-lookup" placeholder="Type 13-digit code here..." inputmode="numeric" onkeypress="if(event.key==='Enter')manualLookup()">
+        <button class="lookup-btn" onclick="manualLookup()">Find Book</button>
+      </div>
+    </div>
+
     <div class="field">
       <label>Title</label>
       <input id="f-title" placeholder="e.g. Saga Omnibus Vol. 1" autocomplete="off">
@@ -223,11 +230,12 @@ select.sort-select{background:transparent;border:none;color:var(--muted);font-si
 
 <div class="toast" id="toast"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/@ericblade/quagga2@1.8.4/dist/quagga.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <script>
 let books = [];
 let filterPub = '';
 let scannedISBN = null;
+let qrScannerInstance = null;
 const STORAGE_KEY = 'omnibus_vault_v2';
 
 function saveBooks(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(books))}catch(e){}}
@@ -239,79 +247,62 @@ function toast(msg,dur=2400){
   clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),dur);
 }
 
-// --- NEW STABLE SCANNING SUBSYSTEM ---
+// --- OPTIMIZED HARDWARE CAMERA SCANNING ENGINE ---
 function startScanner() {
-  const overlay = document.getElementById('scanner-overlay');
-  overlay.classList.remove('hidden');
-  setScanStatus('Starting lens configuration…');
-
-  Quagga.init({
-    inputStream: {
-      name: "Live",
-      type: "LiveStream",
-      target: document.querySelector('#scanner-container'),
-      constraints: {
-        width: 640,
-        height: 480,
-        facingMode: "environment"
-      },
-      singleChannel: false
-    },
-    locator: {
-      patchSize: "medium",
-      halfSample: true
-    },
-    numOfWorkers: navigator.hardwareConcurrency || 2,
-    decoder: {
-      readers: ["ean_reader"] // Directly matches standard retail book lines
-    },
-    locate: true
-  }, function(err) {
-    if (err) {
-      setScanStatus('Camera Access Error: ' + err.message, true);
-      return;
-    }
-    Quagga.start();
-    setScanStatus('Scanner Ready — Center Barcode', true);
-  });
-
-  Quagga.onDetected(onBarcodeRead);
-}
-
-let lastScanTime = 0;
-function onBarcodeRead(data) {
-  const now = Date.now();
-  if (now - lastScanTime < 2000) return; // Prevent double firing loops
-
-  if (data && data.codeResult && data.codeResult.code) {
-    const rawCode = data.codeResult.code;
-    // Validate formatting ranges matching general trade retail codes
-    if (/^(978|979|079)\d+/.test(rawCode) && rawCode.length >= 12) {
-      lastScanTime = now;
-      setScanStatus('Code verified: ' + rawCode, true);
-      stopScanner();
-      lookupISBN(rawCode);
-    }
+  document.getElementById('scanner-overlay').classList.remove('hidden');
+  
+  if (!qrScannerInstance) {
+    qrScannerInstance = new Html5Qrcode("scanner-preview");
   }
-}
 
-function setScanStatus(msg, show = false) {
-  const el = document.getElementById('scan-status');
-  el.textContent = msg;
-  el.classList.toggle('show', show && !!msg);
+  // Force specific EAN_13 reading to skip secondary printing barcodes
+  const config = {
+    fps: 24,
+    qrbox: { width: 280, height: 140 },
+    aspectRatio: 1.777778,
+    formatsToSupport: [ Html5QrcodeSupportedFormats.EAN_13 ]
+  };
+
+  qrScannerInstance.start(
+    { facingMode: "environment" },
+    config,
+    (decodedText) => {
+      // Validate trade retail numeric layouts
+      if (/^(978|979|079)\d+/.test(decodedText) && decodedText.length >= 12) {
+        stopScanner();
+        lookupISBN(decodedText);
+      }
+    },
+    () => {}
+  ).catch(err => {
+    toast("Camera focus timeout — using manual window");
+    stopScanner();
+  });
 }
 
 function stopScanner() {
-  try {
-    Quagga.offDetected(onBarcodeRead);
-    Quagga.stop();
-  } catch(e) {}
-  document.getElementById('scanner-container').innerHTML = "";
-  document.getElementById('scanner-overlay').classList.add('hidden');
+  if (qrScannerInstance && qrScannerInstance.isScanning) {
+    qrScannerInstance.stop().then(() => {
+      document.getElementById('scanner-overlay').classList.add('hidden');
+    }).catch(() => {
+      document.getElementById('scanner-overlay').classList.add('hidden');
+    });
+  } else {
+    document.getElementById('scanner-overlay').classList.add('hidden');
+  }
+}
+
+function manualLookup() {
+  const val = document.getElementById('f-lookup').value.trim().replace(/[-\s]/g, '');
+  if(!val || val.length < 10) {
+    toast('Please enter a valid barcode structure');
+    return;
+  }
+  lookupISBN(val);
 }
 
 async function lookupISBN(isbn){
-  toast('Querying reference logs for ' + isbn + '…', 4000);
+  toast('Querying logs for ' + isbn + '…', 4000);
   scannedISBN = isbn;
   try{
     const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}`);
@@ -325,13 +316,15 @@ async function lookupISBN(isbn){
       else if(/dc\b|dc comics/.test(rawPub)) pub = 'DC';
       else if(/image/.test(rawPub)) pub = 'Image';
       else if(/dark horse/.test(rawPub)) pub = 'Dark Horse';
+      
+      document.getElementById('f-lookup').value = '';
       openDrawer(null, {title, pub, isbn});
     } else {
-      toast('Reference profile clean — fill info manually');
+      toast('Reference clean — write details manually');
       openDrawer(null, {isbn});
     }
   } catch(e) {
-    toast('Network link quiet — completing profile entry manually');
+    toast('Network timed out — completing profile manually');
     openDrawer(null, {isbn});
   }
 }
@@ -343,6 +336,7 @@ function openDrawer(id = null, prefill = null){
   const btn = document.getElementById('submit-btn');
   const titleEl = document.getElementById('drawer-title');
   const badge = document.getElementById('isbn-badge');
+  const lookupWrapper = document.getElementById('lookup-wrapper');
 
   if(id){
     const b = books.find(x => x.id === id); if(!b) return;
@@ -354,6 +348,7 @@ function openDrawer(id = null, prefill = null){
     document.getElementById('f-read').value = b.readStatus || 'unread';
     document.getElementById('f-notes').value = b.notes || '';
     badge.style.display = 'none';
+    lookupWrapper.style.display = 'none';
     titleEl.childNodes[0].textContent = 'EDIT BOOK ';
     btn.textContent = 'SAVE CHANGES';
     scannedISBN = b.isbn || null;
@@ -365,6 +360,7 @@ function openDrawer(id = null, prefill = null){
     document.getElementById('f-date').value = new Date().toISOString().split('T')[0];
     document.getElementById('f-read').value = 'unread';
     document.getElementById('f-notes').value = '';
+    lookupWrapper.style.display = 'block';
     if(prefill?.isbn){
       badge.textContent = 'ISBN ' + prefill.isbn; badge.style.display = 'inline';
       scannedISBN = prefill.isbn;
@@ -374,7 +370,13 @@ function openDrawer(id = null, prefill = null){
   }
   document.getElementById('overlay').classList.add('open');
   document.getElementById('drawer').classList.add('open');
-  setTimeout(() => document.getElementById('f-title').focus(), 350);
+  setTimeout(() => {
+    if(!prefill?.title && !id) {
+      document.getElementById('f-lookup').focus();
+    } else {
+      document.getElementById('f-title').focus();
+    }
+  }, 350);
 }
 
 function closeDrawer(){

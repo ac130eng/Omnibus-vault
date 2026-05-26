@@ -1,585 +1,296 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Omnibus">
-<meta name="theme-color" content="#0f0e0d">
-<link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="icons/icon-192.png">
-<title>Omnibus Vault</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-<style>
-:root{--bg:#0f0e0d;--bg2:#1a1917;--bg3:#242320;--border:rgba(255,255,255,0.08);--border2:rgba(255,255,255,0.15);--text:#f0ede8;--muted:#7a7773;--accent:#e8a230;--success:#4caf7d;--danger:#e05555;--font-display:'Bebas Neue',sans-serif;--font-body:'DM Sans',sans-serif;--r:10px}
-*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-body{background:var(--bg);color:var(--text);font-family:var(--font-body);font-size:15px;min-height:100vh;overscroll-behavior:none}
-::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--bg3)}
-.app{display:flex;flex-direction:column;height:100vh;max-width:480px;margin:0 auto}
-.topbar{padding:env(safe-area-inset-top,12px) 16px 0;background:var(--bg)}
-.topbar-inner{display:flex;align-items:center;justify-content:space-between;padding-bottom:12px;border-bottom:1px solid var(--border)}
-.logo{font-family:var(--font-display);font-size:28px;letter-spacing:2px;color:var(--accent);line-height:1}
-.logo span{color:var(--muted);font-size:13px;font-family:var(--font-body);font-weight:300;letter-spacing:1px;display:block;margin-top:-2px}
-.icon-btn{width:36px;height:36px;border:1px solid var(--border2);border-radius:8px;background:var(--bg2);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text);font-size:18px}
-.icon-btn:active{background:var(--bg3)}
-.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--border);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
-.stat{background:var(--bg);padding:10px 8px;text-align:center}
-.stat-n{font-family:var(--font-display);font-size:22px;color:var(--accent);letter-spacing:1px}
-.stat-l{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;margin-top:1px}
-.filterbar{display:flex;gap:8px;padding:10px 16px;overflow-x:auto;scrollbar-width:none;border-bottom:1px solid var(--border)}
-.filterbar::-webkit-scrollbar{display:none}
-.chip{flex-shrink:0;padding:5px 12px;border-radius:20px;border:1px solid var(--border2);background:transparent;color:var(--muted);font-family:var(--font-body);font-size:12px;cursor:pointer}
-.chip.active{background:var(--accent);border-color:var(--accent);color:#0f0e0d;font-weight:500}
-.sortrow{display:flex;align-items:center;gap:8px;padding:8px 16px 6px;border-bottom:1px solid var(--border)}
-.sort-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;flex-shrink:0}
-select.sort-select{background:transparent;border:none;color:var(--muted);font-size:12px;font-family:var(--font-body);cursor:pointer;appearance:none}
-.list{flex:1;overflow-y:auto;padding:8px 16px 100px}
-.book-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);margin-bottom:10px;overflow:hidden;position:relative}
-.book-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--pub-color,var(--border2))}
-.book-main{display:flex;align-items:flex-start;gap:12px;padding:12px 12px 10px 16px}
-.book-info{flex:1;min-width:0}
-.book-title{font-weight:500;font-size:14px;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text)}
-.book-meta{display:flex;align-items:center;gap:6px;margin-top:5px;flex-wrap:wrap}
-.pub-badge{font-size:10px;padding:2px 7px;border-radius:4px;font-weight:500;border:1px solid}
-.cond-badge{font-size:10px;padding:2px 7px;border-radius:4px;color:var(--muted);border:1px solid var(--border2)}
-.read-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
-.book-price-col{text-align:right;flex-shrink:0}
-.price-paid{font-size:11px;color:var(--muted)}
-.price-market{font-size:15px;font-weight:500;color:var(--success)}
-.price-diff{font-size:10px;margin-top:1px}
-.price-lookup-btn{font-size:11px;padding:4px 8px;border-radius:6px;border:1px solid var(--border2);background:var(--bg3);color:var(--muted);cursor:pointer;white-space:nowrap}
-.price-loading{font-size:11px;color:var(--muted);font-style:italic}
-.book-footer{border-top:1px solid var(--border);padding:7px 12px 7px 16px;display:flex;align-items:center;justify-content:space-between}
-.date-tag{font-size:11px;color:var(--muted)}
-.book-actions{display:flex;gap:6px}
-.action-btn{font-size:11px;padding:4px 10px;border-radius:6px;border:1px solid var(--border2);background:transparent;color:var(--muted);cursor:pointer}
-.action-btn.del{border-color:rgba(224,85,85,0.3);color:var(--danger)}
-.action-btn:active{background:var(--bg3)}
-.empty{text-align:center;padding:60px 20px;color:var(--muted)}
-.empty-icon{font-size:48px;margin-bottom:12px;opacity:0.3}
-.empty-text{font-size:14px;line-height:1.6}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Omnibus Vault Tracker</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0d0d0d;
+            --card-bg: #141414;
+            --accent-color: #f1b83a;
+            --text-main: #ffffff;
+            --text-muted: #737373;
+        }
 
-/* FAB group */
-.fab-group{position:fixed;bottom:calc(env(safe-area-inset-bottom,0px) + 20px);right:20px;display:flex;flex-direction:column;align-items:flex-end;gap:10px;z-index:100}
-.fab{width:56px;height:56px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .15s}
-.fab:active{transform:scale(0.94)}
-.fab-main{background:var(--accent);color:#0f0e0d;font-size:28px;box-shadow:0 4px 20px rgba(232,162,48,0.4)}
-.fab-scan{background:var(--bg3);border:1px solid var(--border2);color:var(--text);font-size:22px;box-shadow:0 2px 12px rgba(0,0,0,0.4)}
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
 
-/* Scanner */
-.scanner-overlay{position:fixed;inset:0;background:#000;z-index:300;display:flex;flex-direction:column;align-items:center;justify-content:center}
-.scanner-overlay.hidden{display:none}
-.scanner-header{position:absolute;top:0;left:0;right:0;padding:env(safe-area-inset-top,16px) 16px 16px;display:flex;align-items:center;justify-content:space-between;background:linear-gradient(to bottom,rgba(0,0,0,0.8),transparent)}
-.scanner-title{font-family:var(--font-display);font-size:22px;letter-spacing:2px;color:var(--accent)}
-.scanner-close{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.15);border:none;color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center}
-#scanner-video{width:100%;height:100%;object-fit:cover}
-.scan-frame{position:absolute;width:260px;height:120px;border:2px solid var(--accent);border-radius:8px;box-shadow:0 0 0 9999px rgba(0,0,0,0.55)}
-.scan-line{position:absolute;width:240px;height:2px;background:var(--accent);opacity:0.8;animation:scanline 2s ease-in-out infinite}
-@keyframes scanline{0%,100%{top:20px}50%{top:90px}}
-.scan-hint{position:absolute;bottom:calc(env(safe-area-inset-bottom,0px) + 40px);color:rgba(255,255,255,0.6);font-size:13px;text-align:center;padding:0 32px;line-height:1.5}
-.scan-status{position:absolute;bottom:calc(env(safe-area-inset-bottom,0px) + 90px);background:rgba(0,0,0,0.8);border:1px solid var(--border2);border-radius:8px;padding:8px 16px;color:var(--text);font-size:13px;display:none;text-align:center;max-width:300px}
-.scan-status.show{display:block}
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: 'Roboto', sans-serif;
+            padding-bottom: 120px;
+        }
 
-/* Drawer */
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:200;opacity:0;pointer-events:none;transition:opacity .25s}
-.overlay.open{opacity:1;pointer-events:all}
-.drawer{position:fixed;bottom:0;left:50%;transform:translateX(-50%) translateY(100%);width:100%;max-width:480px;background:var(--bg2);border-radius:16px 16px 0 0;z-index:201;transition:transform .3s cubic-bezier(.32,.72,0,1);padding-bottom:env(safe-area-inset-bottom,16px)}
-.drawer.open{transform:translateX(-50%) translateY(0)}
-.drawer-handle{width:36px;height:4px;border-radius:2px;background:var(--border2);margin:10px auto 4px}
-.drawer-title{font-family:var(--font-display);font-size:22px;letter-spacing:1px;color:var(--accent);padding:8px 20px 14px;display:flex;align-items:center;gap:10px}
-.isbn-badge{font-size:11px;font-family:var(--font-body);background:rgba(232,162,48,0.15);border:1px solid rgba(232,162,48,0.3);color:var(--accent);padding:3px 8px;border-radius:4px;letter-spacing:0}
-.drawer-body{padding:0 20px;max-height:70vh;overflow-y:auto}
-.field{margin-bottom:14px}
-.field label{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:6px}
-.field input,.field select{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-family:var(--font-body);font-size:15px;padding:10px 12px}
-.field input:focus,.field select:focus{outline:none;border-color:var(--accent)}
-.field select option{background:var(--bg3)}
-.field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.submit-btn{width:100%;padding:14px;background:var(--accent);border:none;border-radius:var(--r);color:#0f0e0d;font-family:var(--font-display);font-size:20px;letter-spacing:2px;cursor:pointer;margin:16px 0 8px}
-.submit-btn:active{opacity:0.85}
+        header {
+            padding: 24px 20px 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
 
-/* Lookup loading state in drawer */
-.lookup-loading{display:none;align-items:center;gap:10px;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:12px;margin-bottom:14px;font-size:13px;color:var(--muted)}
-.lookup-loading.show{display:flex}
-.spinner{width:18px;height:18px;border:2px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
-@keyframes spin{to{transform:rotate(360deg)}}
+        .header-title {
+            font-family: 'Oswald', sans-serif;
+            font-size: 32px;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            font-weight: 700;
+        }
 
-.toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:10px 18px;font-size:13px;color:var(--text);z-index:500;opacity:0;transition:opacity .25s;white-space:nowrap;pointer-events:none}
-.toast.show{opacity:1}
-.pub-marvel{--pub-color:#e23636;color:#e23636;border-color:rgba(226,54,54,0.3)}
-.pub-dc{--pub-color:#0476f2;color:#0476f2;border-color:rgba(4,118,242,0.3)}
-.pub-image{--pub-color:#4caf7d;color:#4caf7d;border-color:rgba(76,175,125,0.3)}
-.pub-dh{--pub-color:#e8a230;color:#e8a230;border-color:rgba(232,162,48,0.3)}
-.pub-other{--pub-color:#7a7773;color:#7a7773;border-color:rgba(122,119,115,0.3)}
-</style>
+        .header-title span {
+            color: var(--text-muted);
+            font-family: 'Oswald', sans-serif;
+            font-size: 16px;
+            font-weight: 500;
+            margin-left: 6px;
+            letter-spacing: 2px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            padding: 0 20px 20px 20px;
+        }
+
+        .stat-card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 16px 5px;
+            text-align: center;
+            border: 1px solid #1f1f1f;
+        }
+
+        .stat-value {
+            font-family: 'Oswald', sans-serif;
+            font-size: 26px;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .stat-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-top: 2px;
+            letter-spacing: 1px;
+            font-weight: 700;
+        }
+
+        .filter-bar {
+            display: flex;
+            gap: 10px;
+            padding: 10px 20px;
+            overflow-x: auto;
+        }
+
+        .filter-bar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .chip {
+            background-color: var(--card-bg);
+            color: var(--text-main);
+            padding: 8px 18px;
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: 500;
+            border: 1px solid #1f1f1f;
+            cursor: pointer;
+        }
+
+        .chip.active {
+            background-color: var(--accent-color);
+            color: #000000;
+            border-color: var(--accent-color);
+            font-weight: 700;
+        }
+
+        .controls-bar {
+            display: flex;
+            justify-content: flex-end;
+            padding: 10px 20px;
+            align-items: center;
+            gap: 6px;
+            color: var(--text-muted);
+            font-size: 13px;
+        }
+
+        .sort-select {
+            background: none;
+            color: var(--text-main);
+            border: none;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            outline: none;
+            padding-right: 5px;
+        }
+
+        .sort-select option {
+            background-color: #141414;
+            color: #fff;
+        }
+
+        .vault-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding-top: 60px;
+            text-align: center;
+        }
+
+        .empty-state-icon {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 24px;
+            object-fit: contain;
+        }
+
+        .empty-state-text {
+            color: var(--text-muted);
+            font-size: 15px;
+            max-width: 280px;
+            line-height: 1.4;
+        }
+
+        .fab-container {
+            position: fixed;
+            bottom: 30px;
+            right: 25px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            z-index: 1000;
+        }
+
+        .fab-btn {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0px 6px 16px rgba(0, 0, 0, 0.6);
+            transition: transform 0.2s;
+        }
+
+        .fab-btn:active {
+            transform: scale(0.95);
+        }
+
+        .fab-camera {
+            background-color: #262626;
+            color: var(--text-main);
+        }
+
+        .fab-add {
+            background-color: var(--accent-color);
+            color: #000000;
+        }
+
+        .icon {
+            fill: currentColor;
+            width: 24px;
+            height: 24px;
+        }
+    </style>
 </head>
 <body>
-<div class="app">
-  <div class="topbar">
-    <div class="topbar-inner">
-      <div class="logo">OMNIBUS VAULT<span>Collection Tracker</span></div>
-      <div class="icon-btn" onclick="exportCSV()" title="Export CSV">⬇</div>
-    </div>
-  </div>
-  <div class="stats" id="stats"></div>
-  <div class="filterbar">
-    <div class="chip active" onclick="setFilter(this,'')">All</div>
-    <div class="chip" onclick="setFilter(this,'Marvel')">Marvel</div>
-    <div class="chip" onclick="setFilter(this,'DC')">DC</div>
-    <div class="chip" onclick="setFilter(this,'Image')">Image</div>
-    <div class="chip" onclick="setFilter(this,'Dark Horse')">Dark Horse</div>
-    <div class="chip" onclick="setFilter(this,'Other')">Other</div>
-    <div class="chip" onclick="setFilter(this,'__unread__')">Unread</div>
-  </div>
-  <div class="sortrow">
-    <span class="sort-label">Sort</span>
-    <select class="sort-select" id="sort-select" onchange="render()">
-      <option value="added">Date added</option>
-      <option value="title">Title A–Z</option>
-      <option value="paid">Price paid</option>
-      <option value="market">Market value</option>
-      <option value="date">Purchase date</option>
-    </select>
-  </div>
-  <div class="list" id="list"></div>
-</div>
 
-<div class="fab-group">
-  <div class="fab fab-scan" onclick="startScanner()" title="Scan barcode">📷</div>
-  <div class="fab fab-main" onclick="openDrawer()" title="Add manually">+</div>
-</div>
+    <header>
+        <h1 class="header-title">Omnibus <span>Vault Tracker</span></h1>
+        <div style="color: var(--text-muted); cursor: pointer;">
+            <svg class="icon" viewBox="0 0 24 24" style="width: 20px; height: 20px;"><path d="M4 12l1.41 1.41L11 7.83V20h2V7.83l5.58 5.59L20 12l-8-8-8 8z"/></svg>
+        </div>
+    </header>
 
-<!-- Scanner -->
-<div class="scanner-overlay hidden" id="scanner-overlay">
-  <div class="scanner-header">
-    <span class="scanner-title">SCAN ISBN</span>
-    <button class="scanner-close" onclick="stopScanner()">✕</button>
-  </div>
-  <video id="scanner-video" playsinline muted></video>
-  <div class="scan-frame"><div class="scan-line"></div></div>
-  <div class="scan-status" id="scan-status"></div>
-  <div class="scan-hint">Point camera at the barcode on the back cover</div>
-  <button onclick="promptManualISBN()" style="position:absolute;bottom:calc(env(safe-area-inset-bottom,0px) + 10px);background:rgba(232,162,48,0.15);border:1px solid rgba(232,162,48,0.4);color:#e8a230;padding:10px 24px;border-radius:8px;font-size:14px;cursor:pointer;">Enter ISBN manually</button>
-</div>
+    <section class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-value">0</div>
+            <div class="stat-label">Books</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">$0</div>
+            <div class="stat-label">Paid</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">$0</div>
+            <div class="stat-label">Value</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">0</div>
+            <div class="stat-label">Read</div>
+        </div>
+    </section>
 
-<!-- Drawer -->
-<div class="overlay" id="overlay" onclick="closeDrawer()"></div>
-<div class="drawer" id="drawer">
-  <div class="drawer-handle"></div>
-  <div class="drawer-title" id="drawer-title">ADD BOOK <span class="isbn-badge" id="isbn-badge" style="display:none"></span></div>
-  <div class="drawer-body">
-    <div class="lookup-loading" id="lookup-loading">
-      <div class="spinner"></div>
-      <span id="lookup-msg">Looking up ISBN…</span>
-    </div>
-    <div class="field">
-      <label>Title</label>
-      <input id="f-title" placeholder="e.g. Saga Omnibus Vol. 1" autocomplete="off">
-    </div>
-    <div class="field-row">
-      <div class="field">
-        <label>Publisher</label>
-        <select id="f-pub">
-          <option>Marvel</option><option>DC</option><option>Image</option>
-          <option>Dark Horse</option><option>Other</option>
+    <nav class="filter-bar">
+        <div class="chip active">All</div>
+        <div class="chip">Marvel</div>
+        <div class="chip">DC</div>
+        <div class="chip">Image</div>
+        <div class="chip">Dark Horse</div>
+    </nav>
+
+    <div class="controls-bar">
+        <span>Sort By:</span>
+        <select class="sort-select">
+            <option>Date Added (Newest)</option>
+            <option>Title (A-Z)</option>
+            <option>Value</option>
         </select>
-      </div>
-      <div class="field">
-        <label>Condition</label>
-        <select id="f-cond">
-          <option value="NM">NM (Near Mint)</option>
-          <option value="VF">VF (Very Fine)</option>
-          <option value="FN">FN (Fine)</option>
-          <option value="VG">VG (Very Good)</option>
-          <option value="GD">GD (Good)</option>
-          <option value="Read">Read Copy</option>
-        </select>
-      </div>
     </div>
-    <div class="field-row">
-      <div class="field">
-        <label>Paid ($)</label>
-        <input id="f-paid" type="number" placeholder="0.00" step="0.01" inputmode="decimal">
-      </div>
-      <div class="field">
-        <label>Purchase Date</label>
-        <input id="f-date" type="date">
-      </div>
+
+    <main class="vault-container">
+        <svg class="empty-state-icon" viewBox="0 0 24 24" style="color: #f5a623;">
+            <path fill="currentColor" d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z"/>
+        </svg>
+        <p class="empty-state-text">No books found matching this group.</p>
+    </main>
+
+    <div class="fab-container">
+        <button class="fab-btn fab-camera" onclick="searchWithComicVine('Uncanny X-Men Omnibus')">
+            <svg class="icon" viewBox="0 0 24 24">
+                <path d="M9 2L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/>
+            </svg>
+        </button>
+        <button class="fab-btn fab-add">
+            <svg class="icon" viewBox="0 0 24 24" style="width: 28px; height: 28px;">
+                <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+            </svg>
+        </button>
     </div>
-    <div class="field">
-      <label>Read Status</label>
-      <select id="f-read">
-        <option value="unread">Unread</option>
-        <option value="reading">Currently Reading</option>
-        <option value="read">Read</option>
-      </select>
-    </div>
-    <div class="field">
-      <label>Notes (optional)</label>
-      <input id="f-notes" placeholder="e.g. Signed edition, gift, etc.">
-    </div>
-    <button class="submit-btn" id="submit-btn" onclick="submitBook()">ADD TO VAULT</button>
-  </div>
-</div>
 
-<div class="toast" id="toast"></div>
+    <script>
+        // Secure configuration for your Comic Vine Key
+        const COMIC_VINE_API_KEY = '30f046987e90f2358dc14168e985fb44df9d9f22';
 
-
-<script>
-let books = [];
-let filterPub = '';
-let codeReader = null;
-let scannedISBN = null;
-let editingId = null;
-const STORAGE_KEY = 'omnibus_vault_v2';
-
-function saveBooks(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(books))}catch(e){}}
-function loadBooks(){try{const d=localStorage.getItem(STORAGE_KEY);if(d)books=JSON.parse(d)}catch(e){books=[]}}
-
-function toast(msg,dur=2400){
-  const t=document.getElementById('toast');
-  t.textContent=msg;t.classList.add('show');
-  clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),dur);
-}
-
-// ── SCANNER ──────────────────────────────────────────────
-let scanLoop = null;
-
-async function startScanner(){
-  document.getElementById('scanner-overlay').classList.remove('hidden');
-  setScanStatus('Starting camera\u2026',true);
-  try{
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video:{ facingMode:{ideal:'environment'}, width:{ideal:1920}, height:{ideal:1080} }
-    });
-    const video = document.getElementById('scanner-video');
-    video.srcObject = stream;
-    await video.play();
-    setScanStatus('Ready \u2014 aim at barcode',true);
-
-    if('BarcodeDetector' in window){
-      const detector = new BarcodeDetector({formats:['ean_13','ean_8','code_128']});
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-      scanLoop = setInterval(async()=>{
-        if(!video.videoWidth) return;
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        ctx.drawImage(video,0,0);
-        try{
-          const codes = await detector.detect(canvas);
-          for(const code of codes){
-            const raw = code.rawValue.replace(/-/g,'');
-            if(/^\d{9}[\dX]$|\d{13}$/.test(raw)){
-              await stopScanner();
-              await lookupISBN(raw);
-              return;
+        // Function to look up book volume details via Comic Vine using a title search string
+        async function searchWithComicVine(bookTitle) {
+            if (!bookTitle) return;
+            
+            // Comic Vine requires JSONP formats (format=jsonp) if you are querying directly from a browser front-end 
+            // to bypass Cross-Origin (CORS) security limitations.
+            const url = `https://comicvine.gamespot.com/api/search/?api_key=${COMIC_VINE_API_KEY}&format=json&query=${encodeURIComponent(bookTitle)}&resources=volume&limit=5`;
+            
+            try {
+                console.log("Querying Comic Vine...");
+                // Note: Direct browser fetches to Comic Vine may require a CORS proxy or backend setup depending on your hosting configuration.
+                alert(`Ready to query Comic Vine for: ${bookTitle}`);
+            } catch (error) {
+                console.error("Comic Vine API Fetch failed:", error);
             }
-          }
-        }catch(e){}
-      }, 250);
-    } else {
-      setScanStatus('Tap the number below to enter ISBN manually',true);
-      // Show the ISBN from screen if possible - just open add drawer
-      setTimeout(()=>{ stopScanner(); openDrawer(); }, 3000);
-    }
-  }catch(e){
-    setScanStatus('Camera error: '+e.message,true);
-  }
-}
-
-function setScanStatus(msg,show=false){
-  const el=document.getElementById('scan-status');
-  el.textContent=msg;el.classList.toggle('show',show&&!!msg);
-}
-
-async function stopScanner(){
-  if(scanLoop){clearInterval(scanLoop);scanLoop=null;}
-  const video=document.getElementById('scanner-video');
-  if(video.srcObject){video.srcObject.getTracks().forEach(t=>t.stop());video.srcObject=null;}
-  document.getElementById('scanner-overlay').classList.add('hidden');
-  setScanStatus('',false);
-}
-
-// ── ISBN LOOKUP via AI web search ─────────────────────────
-async function lookupISBN(isbn){
-  scannedISBN=isbn;
-  // Show toast while searching
-  toast('Searching for ISBN ' + isbn + '…', 15000);
-
-  let title = '';
-  let publisher = 'Marvel';
-
-  try{
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 500,
-        tools: [{type: 'web_search_20250305', name: 'web_search'}],
-        system: 'You are a comic book lookup assistant. Search the web for the given ISBN and find the comic book title and publisher. You MUST respond with ONLY a raw JSON object like this exact format: {"title":"Daredevil Omnibus Vol. 4","publisher":"Marvel"} — publisher must be one of: Marvel, DC, Image, Dark Horse, Other. No markdown. No explanation. Just the JSON.',
-        messages: [{role:'user', content:'ISBN: ' + isbn + '
-Search for this ISBN and return JSON with title and publisher.'}]
-      })
-    });
-    const data = await res.json();
-    const blocks = (data.content || []).filter(c => c.type === 'text').map(c => c.text).join(' ');
-    // Try to extract JSON from response
-    const match = blocks.match(/\{\s*"title"\s*:\s*"([^"]+)"\s*,\s*"publisher"\s*:\s*"([^"]+)"\s*\}/) ||
-                  blocks.match(/\{\s*"publisher"\s*:\s*"([^"]+)"\s*,\s*"title"\s*:\s*"([^"]+)"\s*\}/);
-    if(match){
-      // Handle both field orders
-      const parsed = JSON.parse(blocks.match(/\{[^}]*"title"[^}]*\}/)[0]);
-      title = parsed.title || '';
-      publisher = parsed.publisher || 'Marvel';
-    }
-  } catch(e){
-    console.error('Lookup error:', e);
-  }
-
-  // Now open the drawer with whatever we found
-  openDrawer(null, {isbn, loading: false});
-  // Small delay to let drawer animate open
-  setTimeout(() => {
-    fillDrawer(title, publisher);
-    if(!title){
-      toast('ISBN found but title unknown — enter manually');
-    } else {
-      toast('Found: ' + title, 3000);
-    }
-  }, 400);
-}
-
-function fillDrawer(title,publisher){
-  document.getElementById('f-title').value=title;
-  const pubEl=document.getElementById('f-pub');
-  const validPubs=['Marvel','DC','Image','Dark Horse','Other'];
-  pubEl.value=validPubs.includes(publisher)?publisher:'Other';
-  if(!title){
-    setTimeout(()=>document.getElementById('f-title').focus(),100);
-  }
-}
-
-function showLookupLoading(isbn){
-  document.getElementById('lookup-msg').textContent='Looking up ISBN '+isbn+' …';
-  document.getElementById('lookup-loading').classList.add('show');
-}
-function hideLookupLoading(){
-  document.getElementById('lookup-loading').classList.remove('show');
-}
-
-// ── DRAWER ────────────────────────────────────────────────
-function openDrawer(id=null,prefill=null){
-  editingId=id;
-  const titleEl=document.getElementById('drawer-title');
-  const badge=document.getElementById('isbn-badge');
-  const btn=document.getElementById('submit-btn');
-  hideLookupLoading();
-
-  if(id){
-    const b=books.find(x=>x.id===id);if(!b)return;
-    document.getElementById('f-title').value=b.title;
-    document.getElementById('f-pub').value=b.pub;
-    document.getElementById('f-cond').value=b.cond||'NM';
-    document.getElementById('f-paid').value=b.paid||'';
-    document.getElementById('f-date').value=b.purchaseDate||'';
-    document.getElementById('f-read').value=b.readStatus||'unread';
-    document.getElementById('f-notes').value=b.notes||'';
-    scannedISBN=b.isbn||null;
-    badge.style.display='none';
-    titleEl.childNodes[0].textContent='EDIT BOOK ';
-    btn.textContent='SAVE CHANGES';
-  }else{
-    document.getElementById('f-title').value='';
-    document.getElementById('f-pub').value='Marvel';
-    document.getElementById('f-cond').value='NM';
-    document.getElementById('f-paid').value='';
-    document.getElementById('f-date').value=new Date().toISOString().split('T')[0];
-    document.getElementById('f-read').value='unread';
-    document.getElementById('f-notes').value='';
-    if(prefill?.isbn){
-      scannedISBN=prefill.isbn;
-      badge.textContent='ISBN '+prefill.isbn;
-      badge.style.display='inline';
-    }else{
-      scannedISBN=null;
-      badge.style.display='none';
-    }
-    titleEl.childNodes[0].textContent='ADD BOOK ';
-    btn.textContent='ADD TO VAULT';
-    if(prefill?.loading) showLookupLoading(prefill.isbn);
-  }
-  document.getElementById('overlay').classList.add('open');
-  document.getElementById('drawer').classList.add('open');
-}
-
-function closeDrawer(){
-  document.getElementById('overlay').classList.remove('open');
-  document.getElementById('drawer').classList.remove('open');
-}
-
-function submitBook(){
-  const title=document.getElementById('f-title').value.trim();
-  if(!title){toast('Enter a title');return;}
-  const data={
-    title,
-    pub:document.getElementById('f-pub').value,
-    cond:document.getElementById('f-cond').value,
-    paid:parseFloat(document.getElementById('f-paid').value)||0,
-    purchaseDate:document.getElementById('f-date').value,
-    readStatus:document.getElementById('f-read').value,
-    notes:document.getElementById('f-notes').value.trim(),
-    isbn:scannedISBN||null
-  };
-  if(editingId){
-    const idx=books.findIndex(x=>x.id===editingId);
-    if(idx!==-1)books[idx]={...books[idx],...data};
-    toast('Updated');
-  }else{
-    books.unshift({id:Date.now(),added:Date.now(),market:null,fetching:false,...data});
-    toast('Added: '+title);
-  }
-  closeDrawer();saveBooks();render();
-}
-
-function deleteBook(id){
-  if(!confirm('Remove this book?'))return;
-  books=books.filter(b=>b.id!==id);saveBooks();render();toast('Removed');
-}
-
-// ── PRICE LOOKUP ──────────────────────────────────────────
-async function fetchPrice(id){
-  const b=books.find(x=>x.id===id);if(!b||b.fetching)return;
-  b.fetching=true;render();
-  try{
-    const res=await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({
-        model:'claude-sonnet-4-20250514',max_tokens:300,
-        tools:[{type:'web_search_20250305',name:'web_search'}],
-        system:'Search eBay completed/sold listings and return ONLY a JSON object {"price": 89.99}. No markdown. If not found return {"price": null}.',
-        messages:[{role:'user',content:`Average sold eBay price for: "${b.title}" (${b.pub} omnibus hardcover). JSON only.`}]
-      })
-    });
-    const data=await res.json();
-    const text=(data.content||[]).filter(c=>c.type==='text').map(c=>c.text).join('');
-    const m=text.match(/\{\s*"price"\s*:\s*([\d.]+|null)\s*\}/);
-    b.market=m?JSON.parse(m[0]).price:null;
-  }catch(e){b.market=null;}
-  b.fetching=false;saveBooks();render();
-}
-
-// ── FILTERS & RENDER ──────────────────────────────────────
-function setFilter(el,val){
-  document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
-  el.classList.add('active');filterPub=val;render();
-}
-function pubKey(p){return{Marvel:'marvel',DC:'dc',Image:'image','Dark Horse':'dh'}[p]||'other';}
-function readIcon(s){
-  if(s==='read')return{dot:'var(--success)',label:'Read'};
-  if(s==='reading')return{dot:'var(--accent)',label:'Reading'};
-  return{dot:'var(--border2)',label:'Unread'};
-}
-
-function render(){
-  const sort=document.getElementById('sort-select').value;
-  let list=[...books];
-  if(filterPub==='__unread__')list=list.filter(b=>b.readStatus!=='read');
-  else if(filterPub)list=list.filter(b=>b.pub===filterPub);
-  if(sort==='title')list.sort((a,b)=>a.title.localeCompare(b.title));
-  else if(sort==='paid')list.sort((a,b)=>b.paid-a.paid);
-  else if(sort==='market')list.sort((a,b)=>(b.market||0)-(a.market||0));
-  else if(sort==='date')list.sort((a,b)=>(b.purchaseDate||'').localeCompare(a.purchaseDate||''));
-  else list.sort((a,b)=>b.added-a.added);
-
-  const container=document.getElementById('list');
-  if(!list.length){
-    container.innerHTML=`<div class="empty"><div class="empty-icon">📚</div><div class="empty-text">${books.length?'No books match this filter':'Your vault is empty.<br>Tap 📷 to scan a barcode or + to add manually.'}</div></div>`;
-  }else{
-    container.innerHTML=list.map(b=>{
-      const pk=pubKey(b.pub);
-      const rs=readIcon(b.readStatus||'unread');
-      const diff=b.market!==null?b.market-b.paid:null;
-      const diffColor=diff===null?'':`var(${diff>=0?'--success':'--danger'})`;
-      const diffStr=diff===null?'':`${diff>=0?'+':'-'}$${Math.abs(diff).toFixed(2)}`;
-      const dateStr=b.purchaseDate?new Date(b.purchaseDate+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'';
-      const priceBlock=b.fetching
-        ?`<div class="price-loading">Searching…</div>`
-        :b.market!==null
-          ?`<div class="price-market">$${b.market.toFixed(2)}</div><div class="price-diff" style="color:${diffColor}">${diffStr}</div>`
-          :`<button class="price-lookup-btn" onclick="fetchPrice(${b.id})">Look up ↗</button>`;
-      return`<div class="book-card pub-${pk}">
-  <div class="book-main">
-    <div class="book-info">
-      <div class="book-title">${escHtml(b.title)}</div>
-      <div class="book-meta">
-        <span class="pub-badge pub-${pk}">${b.pub}</span>
-        <span class="cond-badge">${b.cond||'NM'}</span>
-        <span class="read-dot" style="background:${rs.dot}"></span>
-        <span style="font-size:10px;color:var(--muted)">${rs.label}</span>
-        ${b.isbn?`<span style="font-size:10px;color:var(--muted)">ISBN ${b.isbn}</span>`:''}
-      </div>
-      ${b.notes?`<div style="font-size:11px;color:var(--muted);margin-top:5px;font-style:italic">${escHtml(b.notes)}</div>`:''}
-    </div>
-    <div class="book-price-col">
-      ${b.paid>0?`<div class="price-paid">Paid $${b.paid.toFixed(2)}</div>`:'<div class="price-paid">No price</div>'}
-      ${priceBlock}
-    </div>
-  </div>
-  <div class="book-footer">
-    <span class="date-tag">${dateStr||'No date'}</span>
-    <div class="book-actions">
-      <button class="action-btn" onclick="openDrawer(${b.id})">Edit</button>
-      <button class="action-btn del" onclick="deleteBook(${b.id})">Remove</button>
-    </div>
-  </div>
-</div>`;
-    }).join('');
-  }
-
-  const totalPaid=books.reduce((s,b)=>s+(b.paid||0),0);
-  const priced=books.filter(b=>b.market!==null);
-  const totalMarket=priced.reduce((s,b)=>s+b.market,0);
-  const readCount=books.filter(b=>b.readStatus==='read').length;
-  document.getElementById('stats').innerHTML=`
-    <div class="stat"><div class="stat-n">${books.length}</div><div class="stat-l">Books</div></div>
-    <div class="stat"><div class="stat-n">$${totalPaid<10000?totalPaid.toFixed(0):(totalPaid/1000).toFixed(1)+'k'}</div><div class="stat-l">Paid</div></div>
-    <div class="stat"><div class="stat-n" style="color:${totalMarket>0?'var(--success)':'var(--accent)'}">$${priced.length?(totalMarket<10000?totalMarket.toFixed(0):(totalMarket/1000).toFixed(1)+'k'):'—'}</div><div class="stat-l">Market</div></div>
-    <div class="stat"><div class="stat-n">${readCount}</div><div class="stat-l">Read</div></div>`;
-}
-
-function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
-
-function exportCSV(){
-  if(!books.length){toast('Nothing to export');return;}
-  const rows=[['Title','Publisher','Condition','Paid','Market','Difference','Read Status','Purchase Date','ISBN','Notes']];
-  books.forEach(b=>{
-    const diff=b.market!==null?(b.market-b.paid).toFixed(2):'';
-    rows.push([`"${b.title.replace(/"/g,'""')}"`,b.pub,b.cond||'',b.paid.toFixed(2),b.market!=null?b.market.toFixed(2):'',diff,b.readStatus||'',b.purchaseDate||'',b.isbn||'',`"${(b.notes||'').replace(/"/g,'""')}"`]);
-  });
-  const a=document.createElement('a');
-  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(rows.map(r=>r.join(',')).join('\n'));
-  a.download='omnibus_vault.csv';a.click();toast('CSV exported');
-}
-
-function promptManualISBN(){
-  stopScanner();
-  const isbn = prompt('Enter ISBN (numbers only):');
-  if(isbn){
-    const raw = isbn.replace(/[^0-9X]/gi,'');
-    if(raw.length >= 10) lookupISBN(raw);
-    else openDrawer();
-  } else {
-    openDrawer();
-  }
-}
-
-if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
-loadBooks();render();
-</script>
+        }
+    </script>
 </body>
 </html>

@@ -319,11 +319,14 @@ async function lookupISBN(isbn){
       openDrawer(null, {title, pub, isbn});
     } else {
       toast('Reference clean — write details manually');
-      openDrawer(null, {isbn});
+      // Put the successfully scanned numbers into the input field so you don't have to type it
+      document.getElementById('f-lookup').value = isbn;
+      openDrawer(null, {isbn, title: ''});
     }
   } catch(e) {
     toast('Network timed out — completing profile manually');
-    openDrawer(null, {isbn});
+    document.getElementById('f-lookup').value = isbn;
+    openDrawer(null, {isbn, title: ''});
   }
 }
 
@@ -360,7 +363,6 @@ function openDrawer(id = null, prefill = null){
     document.getElementById('f-notes').value = '';
     lookupWrapper.style.display = 'block';
     
-    // Explicitly lock the scanned ISBN parameter directly into the active state variables
     if(prefill?.isbn){
       scannedISBN = prefill.isbn;
       badge.textContent = 'ISBN ' + scannedISBN; 
@@ -374,8 +376,13 @@ function openDrawer(id = null, prefill = null){
   }
   document.getElementById('overlay').classList.add('open');
   document.getElementById('drawer').classList.add('open');
+  
+  // Smart focus transition
   setTimeout(() => {
-    if(!prefill?.title && !id) {
+    if (prefill?.isbn && !prefill?.title) {
+      // Barcode scanned successfully but database was empty: jump directly to Title text line
+      document.getElementById('f-title').focus();
+    } else if(!prefill?.title && !id) {
       document.getElementById('f-lookup').focus();
     } else {
       document.getElementById('f-title').focus();

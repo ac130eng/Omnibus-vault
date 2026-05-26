@@ -269,4 +269,266 @@
     <main class="vault-container" id="vault-display">
         <div class="empty-state" id="empty-state-wrapper">
             <svg class="empty-state-icon" viewBox="0 0 24 24" style="color: #e59322;">
-                <path fill="currentColor" d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0
+                <path fill="currentColor" d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z"/>
+            </svg>
+            <p class="empty-state-text">Your vault is currently empty.</p>
+        </div>
+    </main>
+
+    <div class="fab-container">
+        <button class="fab-btn fab-camera" onclick="startCameraScanner()">
+            <svg class="icon" viewBox="0 0 24 24"><path d="M9 2L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/></svg>
+        </button>
+        <button class="fab-btn fab-add" onclick="openModal('manual-modal')">
+            <svg class="icon" viewBox="0 0 24 24" style="width: 28px; height: 28px;"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+        </button>
+    </div>
+
+    <div class="modal-overlay" id="camera-modal">
+        <div class="modal-card">
+            <div class="modal-title">Scan Book Barcode</div>
+            <div id="scanner-viewfinder"></div>
+            <div class="modal-actions">
+                <button class="btn btn-cancel" onclick="stopCameraScanner()">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="verify-modal">
+        <div class="modal-card">
+            <div class="modal-title">Verify Book Information</div>
+            <div class="status-msg" id="verify-status"></div>
+            
+            <input type="hidden" id="v-img">
+            <div class="form-group">
+                <label>Book Title / Volume</label>
+                <input type="text" class="form-control" id="v-title">
+            </div>
+            <div class="form-group">
+                <label>Publisher</label>
+                <input type="text" class="form-control" id="v-publisher">
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-cancel" onclick="closeModal('verify-modal')">Discard</button>
+                <button class="btn btn-submit" onclick="saveVerifiedBook()">Add to Vault</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="manual-modal">
+        <div class="modal-card">
+            <div class="modal-title">Add Book Manually</div>
+            <div class="form-group">
+                <label>Book Title</label>
+                <input type="text" class="form-control" id="m-title" placeholder="e.g. Batman Omnibus Vol 1">
+            </div>
+            <div class="form-group">
+                <label>Publisher</label>
+                <input type="text" class="form-control" id="m-publisher" placeholder="e.g. DC Comics">
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-cancel" onclick="closeModal('manual-modal')">Cancel</button>
+                <button class="btn btn-submit" onclick="submitManualBook()">Save Book</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const CLOUD_PROXY_URL = 'https://us-central1-omnibus-vault.cloudfunctions.net/comicProxy';
+        let html5QrcodeScanner = null;
+        let vaultInventory = JSON.parse(localStorage.getItem('vaultInventory')) || [];
+
+        window.onload = function() {
+            renderInventoryList();
+        };
+
+        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+        function startCameraScanner() {
+            openModal('camera-modal');
+            html5QrcodeScanner = new Html5Qrcode("scanner-viewfinder");
+            const config = { fps: 10, qrbox: { width: 260, height: 160 } };
+
+            html5QrcodeScanner.start(
+                { facingMode: "environment" }, 
+                config,
+                onBarcodeSuccess,
+                () => {}
+            ).catch(err => {
+                alert("Camera permission blocked.");
+                stopCameraScanner();
+            });
+        }
+
+        function onBarcodeSuccess(decodedText) {
+            stopCameraScanner();
+            document.getElementById('verify-status').innerText = "Searching global records...";
+            
+            document.getElementById('v-title').value = "Scanned Book (" + decodedText + ")";
+            document.getElementById('v-publisher').value = "Unknown";
+            document.getElementById('v-img').value = "";
+            openModal('verify-modal');
+
+            lookupBarcodeMetadata(decodedText);
+        }
+
+        function stopCameraScanner() {
+            closeModal('camera-modal');
+            if (html5QrcodeScanner) {
+                html5QrcodeScanner.stop().then(() => html5QrcodeScanner.clear()).catch(() => {});
+            }
+        }
+
+        async function lookupBarcodeMetadata(isbnCode) {
+            try {
+                const targetUrl = `https://openlibrary.org/api/volumes/brief/isbn/${isbnCode}.json`;
+                const finalProxyUrl = `${CLOUD_PROXY_URL}?targetUrl=${encodeURIComponent(targetUrl)}`;
+                
+                const res = await fetch(finalProxyUrl);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data && Object.keys(data).length > 0) {
+                        const records = data.records;
+                        const firstKey = Object.keys(records)[0];
+                        const title = records[firstKey]?.record?.title || "";
+                        if (title) {
+                            await queryComicVineData(title);
+                            return;
+                        }
+                    }
+                }
+                handleFailedLookup(isbnCode);
+            } catch (e) {
+                handleFailedLookup(isbnCode);
+            }
+        }
+
+        async function queryComicVineData(bookTitle) {
+            const targetUrl = `https://comicvine.gamespot.com/api/search/?format=json&query=${encodeURIComponent(bookTitle)}&resources=volume&limit=1`;
+            const finalProxyUrl = `${CLOUD_PROXY_URL}?targetUrl=${encodeURIComponent(targetUrl)}`;
+
+            try {
+                const response = await fetch(finalProxyUrl);
+                if (response.ok) {
+                    const actualData = await response.json();
+                    
+                    if (actualData.results && actualData.results.length > 0) {
+                        const match = actualData.results[0];
+                        document.getElementById('verify-status').innerText = "Match Found!";
+                        document.getElementById('v-title').value = match.name + (match.start_year ? ` (${match.start_year})` : '');
+                        document.getElementById('v-publisher').value = match.publisher?.name || "Unknown";
+                        document.getElementById('v-img').value = match.image?.icon_url || "";
+                        return;
+                    }
+                }
+                handleFailedLookup();
+            } catch (err) {
+                handleFailedLookup();
+            }
+        }
+
+        function handleFailedLookup(isbnFallback = "") {
+            document.getElementById('verify-status').innerText = "Ready to add! Adjust info as needed:";
+            const titleField = document.getElementById('v-title');
+            const pubField = document.getElementById('v-publisher');
+
+            if (isbnFallback && titleField.value.includes("Scanned Book")) {
+                titleField.value = "Scanned Book (" + isbnFallback + ")";
+            }
+            if (!pubField.value || pubField.value === "") {
+                pubField.value = "Unknown";
+            }
+        }
+
+        function saveVerifiedBook() {
+            const title = document.getElementById('v-title').value.trim();
+            const publisher = document.getElementById('v-publisher').value.trim();
+            const image = document.getElementById('v-img').value;
+
+            if (!title) {
+                alert("Book must contain a valid title.");
+                return;
+            }
+
+            const newBook = {
+                id: Date.now(),
+                title: title,
+                publisher: publisher || 'Other',
+                image: image || ''
+            };
+
+            vaultInventory.push(newBook);
+            localStorage.setItem('vaultInventory', JSON.stringify(vaultInventory));
+            
+            closeModal('verify-modal');
+            renderInventoryList();
+        }
+
+        function submitManualBook() {
+            const title = document.getElementById('m-title').value.trim();
+            const publisher = document.getElementById('m-publisher').value.trim();
+            
+            if (!title) return;
+
+            const newBook = {
+                id: Date.now(),
+                title: title,
+                publisher: publisher || 'Other',
+                image: ''
+            };
+
+            vaultInventory.push(newBook);
+            localStorage.setItem('vaultInventory', JSON.stringify(vaultInventory));
+            
+            document.getElementById('m-title').value = "";
+            document.getElementById('m-publisher').value = "";
+            
+            closeModal('manual-modal');
+            renderInventoryList();
+        }
+
+        function removeBook(id) {
+            vaultInventory = vaultInventory.filter(book => book.id !== id);
+            localStorage.setItem('vaultInventory', JSON.stringify(vaultInventory));
+            renderInventoryList();
+        }
+
+        function renderInventoryList() {
+            const vaultDisplay = document.getElementById('vault-display');
+            const emptyWrapper = document.getElementById('empty-state-wrapper');
+            
+            const oldCards = vaultDisplay.querySelectorAll('.book-card');
+            oldCards.forEach(card => card.remove());
+
+            if (vaultInventory.length === 0) {
+                if (emptyWrapper) emptyWrapper.style.display = 'flex';
+                document.getElementById('stat-books').innerText = "0";
+                document.getElementById('stat-value').innerText = "$0";
+                return;
+            }
+
+            if (emptyWrapper) emptyWrapper.style.display = 'none';
+
+            vaultInventory.forEach(book => {
+                const card = document.createElement('div');
+                card.className = 'book-card';
+                const coverUrl = book.image ? book.image : 'https://via.placeholder.com/60x90/222/fff?text=Book';
+                
+                card.innerHTML = `
+                    <img src="${coverUrl}" class="book-cover" alt="Cover">
+                    <div class="book-details">
+                        <h4 class="book-title">${book.title}</h4>
+                        <p class="book-pub">${book.publisher}</p>
+                    </div>
+                    <button class="btn-delete" onclick="removeBook(${book.id})">×</button>
+                `;
+                vaultDisplay.appendChild(card);
+            });
+
+            document.getElementById('stat-books').innerText = vaultInventory.length;
+            document.getElementById('stat-value').innerText = "$" + (vaultInventory.length * 125);
+        }
+    </script>
+</body>
+</html>

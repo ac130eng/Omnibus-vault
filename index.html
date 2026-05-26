@@ -1,59 +1,285 @@
-async function lookupBarcode() {
-    const code = document.getElementById('f-barcode').value.trim();
-    if(!code) return;
-
-    const btn = document.querySelector('.lookup-btn');
-    const originalText = btn.innerText;
-    btn.innerText = 'Searching...';
-    btn.disabled = true;
-
-    let foundBook = false;
-
-    try {
-        const url = `https://openlibrary.org/api/volumes/brief/isbn/${code}.json`;
-        const res = await fetch(url);
-        
-        if (res.ok) {
-            const data = await res.json();
-            if (data && Object.keys(data).length > 0) {
-                const records = data.records;
-                const firstKey = Object.keys(records)[0];
-                const bookInfo = records[firstKey]?.record;
-                
-                if (bookInfo && bookInfo.title) {
-                    foundBook = true;
-                    document.getElementById('f-title').value = bookInfo.title;
-                    
-                    const titleUpper = bookInfo.title.toUpperCase();
-                    const pubSelect = document.getElementById('f-publisher');
-                    if (titleUpper.includes('MARVEL')) {
-                        pubSelect.value = 'Marvel';
-                    } else if (titleUpper.includes('DC COMICS') || titleUpper.includes('BATMAN') || titleUpper.includes('SUPERMAN')) {
-                        pubSelect.value = 'DC';
-                    } else if (titleUpper.includes('IMAGE COMICS')) {
-                        pubSelect.value = 'Image';
-                    } else if (titleUpper.includes('DARK HORSE')) {
-                        pubSelect.value = 'Dark Horse';
-                    } else {
-                        pubSelect.value = 'Other';
-                    }
-                    showToast("Barcode search complete!");
-                }
-            }
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Omnibus Vault</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0d0d0d;
+            --card-bg: #1a1a1a;
+            --accent-color: #f1b83a;
+            --text-main: #ffffff;
+            --text-muted: #888888;
         }
-        
-        // Handle database blind spots smoothly
-        if (!foundBook) {
-            showToast("Not found in database. Enter title manually.");
-            const titleField = document.getElementById('f-title');
-            titleField.focus();
-            titleField.select(); // Ready for immediate typing
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
         }
-    } catch (e) {
-        console.error(e);
-        showToast("Network error searching database.");
-    } finally {
-        btn.innerText = originalText;
-        btn.disabled = false;
-    }
-}
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: 'Roboto', sans-serif;
+            padding-bottom: 100px; /* Space for floating buttons */
+        }
+
+        /* Header Styles */
+        header {
+            padding: 20px 15px;
+            background: linear-gradient(180deg, #141414 0%, #0d0d0d 100%);
+            border-bottom: 1px solid #222;
+        }
+
+        .header-title-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-title {
+            font-family: 'Oswald', sans-serif;
+            font-size: 28px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .header-title span {
+            color: var(--text-muted);
+            font-family: 'Roboto', sans-serif;
+            font-size: 14px;
+            font-weight: 400;
+            margin-left: 8px;
+            letter-spacing: 2px;
+        }
+
+        /* Stats Dashboard Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            padding: 15px;
+        }
+
+        .stat-card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 12px 5px;
+            text-align: center;
+            border: 1px solid #262626;
+        }
+
+        .stat-value {
+            font-family: 'Oswald', sans-serif;
+            font-size: 22px;
+            color: var(--text-main);
+        }
+
+        .stat-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-top: 4px;
+            letter-spacing: 1px;
+            font-weight: 500;
+        }
+
+        /* Filter Chips Bar */
+        .filter-bar {
+            display: flex;
+            gap: 8px;
+            padding: 10px 15px;
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+
+        .filter-bar::-webkit-scrollbar {
+            display: none; /* Hide scrollbar for clean look */
+        }
+
+        .chip {
+            background-color: var(--card-bg);
+            color: var(--text-main);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+            border: 1px solid #262626;
+            cursor: pointer;
+        }
+
+        .chip.active {
+            background-color: var(--accent-color);
+            color: #000000;
+            border-color: var(--accent-color);
+            font-weight: 700;
+        }
+
+        /* Sort Section */
+        .controls-bar {
+            display: flex;
+            justify-content: flex-end;
+            padding: 10px 15px;
+        }
+
+        .sort-select {
+            background-color: var(--card-bg);
+            color: var(--text-main);
+            border: 1px solid #262626;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+        }
+
+        /* Main Content Vault Area */
+        .vault-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 350px;
+            padding: 40px 20px;
+            text-align: center;
+        }
+
+        .empty-state-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+            opacity: 0.8;
+        }
+
+        .empty-state-text {
+            color: var(--text-muted);
+            font-size: 16px;
+            line-height: 1.5;
+            max-width: 280px;
+        }
+
+        /* Floating Interaction Buttons */
+        .fab-container {
+            position: fixed;
+            bottom: 25px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            align-items: center;
+            z-index: 999;
+        }
+
+        .fab-btn {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.5);
+        }
+
+        .fab-camera {
+            background-color: #2a2a2a;
+            color: var(--text-main);
+            width: 48px;
+            height: 48px;
+        }
+
+        .fab-add {
+            background-color: var(--accent-color);
+            color: #000000;
+        }
+
+        /* Icon Placeholders using standard SVGs or clean text */
+        .icon {
+            fill: currentColor;
+            width: 24px;
+            height: 24px;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="header-title-container">
+            <h1 class="header-title">Omnibus <span>Vault Tracker</span></h1>
+            <div style="color: var(--text-muted); cursor: pointer;">
+                <svg class="icon" viewBox="0 0 24 24"><path d="M4 12l1.41 1.41L11 7.83V20h2V7.83l5.58 5.59L20 12l-8-8-8 8z"/></svg>
+            </div>
+        </div>
+    </header>
+
+    <section class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-value">0</div>
+            <div class="stat-label">Books</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">$0</div>
+            <div class="stat-label">Paid</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">$0</div>
+            <div class="stat-label">Value</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">0</div>
+            <div class="stat-label">Read</div>
+        </div>
+    </section>
+
+    <nav class="filter-bar">
+        <div class="chip active">All</div>
+        <div class="chip">Marvel</div>
+        <div class="chip">DC</div>
+        <div class="chip">Image</div>
+        <div class="chip">Dark Horse</div>
+        <div class="chip">Other</div>
+    </nav>
+
+    <div class="controls-bar">
+        <select class="sort-select">
+            <option>Date Added (Newest)</option>
+            <option>Date Added (Oldest)</option>
+            <option>Title (A-Z)</option>
+            <option>Market Value</option>
+        </select>
+    </div>
+
+    <main class="vault-container" id="vault-display">
+        <div class="empty-state-icon">📂</div>
+        <p class="empty-state-text">No books found matching this group.</p>
+    </main>
+
+    <div class="fab-container">
+        <button class="fab-btn fab-camera" title="Scan Barcode" onclick="openScanner()">
+            <svg class="icon" viewBox="0 0 24 24">
+                <path d="M9 2L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/>
+            </svg>
+        </button>
+        <button class="fab-btn fab-add" title="Add Book Manually" onclick="addNewBook()">
+            <svg class="icon" viewBox="0 0 24 24" style="width: 28px; height: 28px;">
+                <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+            </svg>
+        </button>
+    </div>
+
+    <script>
+        function openScanner() {
+            alert("Camera scanner action triggered!");
+            // Your barcode lookup code execution hook goes here
+        }
+
+        function addNewBook() {
+            alert("Manual entry form window triggered!");
+            // Your custom data entry form hook goes here
+        }
+    </script>
+</body>
+</html>

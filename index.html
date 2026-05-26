@@ -73,15 +73,17 @@ select.sort-select{background:transparent;border:none;color:var(--muted);font-si
 /* Scanner overlay */
 .scanner-overlay{position:fixed;inset:0;background:#000;z-index:300;display:flex;flex-direction:column;align-items:center;justify-content:center}
 .scanner-overlay.hidden{display:none}
-.scanner-header{position:absolute;top:0;left:0;right:0;padding:env(safe-area-inset-top,16px) 16px 16px;display:flex;align-items:center;justify-content:space-between;background:linear-gradient(to bottom,rgba(0,0,0,0.8),transparent)}
+.scanner-header{position:absolute;top:0;left:0;right:0;padding:env(safe-area-inset-top,16px) 16px 16px;display:flex;align-items:center;justify-content:space-between;background:linear-gradient(to bottom,rgba(0,0,0,0.8),transparent);z-index:310}
 .scanner-title{font-family:var(--font-display);font-size:22px;letter-spacing:2px;color:var(--accent)}
 .scanner-close{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,0.15);border:none;color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center}
-#scanner-video{width:100%;height:100%;object-fit:cover}
-.scan-frame{position:absolute;width:260px;height:120px;border:2px solid var(--accent);border-radius:8px;box-shadow:0 0 0 9999px rgba(0,0,0,0.5555)}
-.scan-line{position:absolute;width:240px;height:2px;background:var(--accent);opacity:0.8;animation:scanline 2s ease-in-out infinite}
-@keyframes scanline{0%,100%{top:20px}50%{top:90px}}
-.scan-hint{position:absolute;bottom:calc(env(safe-area-inset-bottom,0px) + 40px);color:rgba(255,255,255,0.6);font-size:13px;text-align:center;padding:0 32px;line-height:1.5}
-.scan-status{position:absolute;bottom:calc(env(safe-area-inset-bottom,0px) + 90px);background:rgba(0,0,0,0.7);border:1px solid var(--border2);border-radius:8px;padding:8px 16px;color:var(--text);font-size:13px;display:none}
+#scanner-container{width:100%;height:100%;position:relative}
+#scanner-container video{width:100%;height:100%;object-fit:cover}
+#scanner-container canvas{position:absolute;top:0;left:0;display:none}
+.scan-frame{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:280px;height:140px;border:2px solid var(--accent);border-radius:8px;box-shadow:0 0 0 9999px rgba(0,0,0,0.65);z-index:305;pointer-events:none}
+.scan-line{position:absolute;width:100%;height:2px;background:var(--accent);opacity:0.8;top:10px;animation:scanline 2.2s ease-in-out infinite}
+@keyframes scanline{0%,100%{top:10px}50%{top:128px}}
+.scan-hint{position:absolute;bottom:calc(env(safe-area-inset-bottom,0px) + 40px);color:rgba(255,255,255,0.7);font-size:13px;text-align:center;padding:0 32px;line-height:1.5;z-index:310}
+.scan-status{position:absolute;bottom:calc(env(safe-area-inset-bottom,0px) + 100px);background:rgba(0,0,0,0.85);border:1px solid var(--border2);border-radius:8px;padding:8px 16px;color:var(--text);font-size:13px;display:none;z-index:310}
 .scan-status.show{display:block}
 
 /* Drawer */
@@ -93,22 +95,18 @@ select.sort-select{background:transparent;border:none;color:var(--muted);font-si
 .drawer-title{font-family:var(--font-display);font-size:22px;letter-spacing:1px;color:var(--accent);padding:8px 20px 14px;display:flex;align-items:center;gap:10px}
 .isbn-badge{font-size:11px;font-family:var(--font-body);background:rgba(232,162,48,0.15);border:1px solid rgba(232,162,48,0.3);color:var(--accent);padding:3px 8px;border-radius:4px;letter-spacing:0}
 .drawer-body{padding:0 20px;max-height:70vh;overflow-y:auto}
-.field{margin-bottom:14px}
+.field {margin-bottom:14px}
 .field label{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;display:block;margin-bottom:6px}
 .field input,.field select{width:100%;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;color:var(--text);font-family:var(--font-body);font-size:15px;padding:10px 12px}
 .field input:focus,.field select:focus{outline:none;border-color:var(--accent)}
 .field select option{background:var(--bg3)}
 .field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.lookup-row{display:flex;gap:8px}
-.lookup-row input{flex:1}
-.lookup-btn{padding:10px 14px;background:var(--bg3);border:1px solid var(--border2);border-radius:8px;color:var(--muted);font-size:13px;cursor:pointer;white-space:nowrap;flex-shrink:0}
-.lookup-btn:active{background:var(--bg)}
 .submit-btn{width:100%;padding:14px;background:var(--accent);border:none;border-radius:var(--r);color:#0f0e0d;font-family:var(--font-display);font-size:20px;letter-spacing:2px;cursor:pointer;margin:16px 0 8px;transition:opacity .15s}
 .submit-btn:active{opacity:0.85}
 .toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%);background:var(--bg3);border:1px solid var(--border2);border-radius:8px;padding:10px 18px;font-size:13px;color:var(--text);z-index:500;opacity:0;transition:opacity .25s;white-space:nowrap;pointer-events:none}
 .toast.show{opacity:1}
 
-/* Colors by publisher */
+/* Publisher overrides */
 .pub-marvel{--pub-color:#e23636;color:#e23636;border-color:rgba(226,54,54,0.3)}
 .pub-dc{--pub-color:#0476f2;color:#0476f2;border-color:rgba(4,118,242,0.3)}
 .pub-image{--pub-color:#4caf7d;color:#4caf7d;border-color:rgba(76,175,125,0.3)}
@@ -156,15 +154,15 @@ select.sort-select{background:transparent;border:none;color:var(--muted);font-si
 
 <div class="scanner-overlay hidden" id="scanner-overlay">
   <div class="scanner-header">
-    <span class="scanner-title">SCAN ISBN</span>
+    <span class="scanner-title">SCAN BARCODE</span>
     <button class="scanner-close" onclick="stopScanner()">✕</button>
   </div>
-  <video id="scanner-video" playsinline muted></video>
+  <div id="scanner-container"></div>
   <div class="scan-frame">
     <div class="scan-line"></div>
   </div>
   <div class="scan-status" id="scan-status"></div>
-  <div class="scan-hint">Point camera at the barcode on the back cover.<br>Works best in good lighting.</div>
+  <div class="scan-hint">Center the main barcode inside the box.<br>Avoid reflections and bright glares.</div>
 </div>
 
 <div class="overlay" id="overlay" onclick="closeDrawer()"></div>
@@ -225,12 +223,10 @@ select.sort-select{background:transparent;border:none;color:var(--muted);font-si
 
 <div class="toast" id="toast"></div>
 
-<script src="https://unpkg.com/@zxing/library@0.19.1/umd/index.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@ericblade/quagga2@1.8.4/dist/quagga.min.js"></script>
 <script>
 let books = [];
 let filterPub = '';
-let scanStream = null;
-let codeReader = null;
 let scannedISBN = null;
 const STORAGE_KEY = 'omnibus_vault_v2';
 
@@ -243,115 +239,142 @@ function toast(msg,dur=2400){
   clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),dur);
 }
 
-// --- SCANNER SYSTEM ---
-async function startScanner(){
-  const overlay=document.getElementById('scanner-overlay');
+// --- NEW STABLE SCANNING SUBSYSTEM ---
+function startScanner() {
+  const overlay = document.getElementById('scanner-overlay');
   overlay.classList.remove('hidden');
-  setScanStatus('Initializing camera…');
-  try{
-    codeReader = new ZXing.BrowserMultiFormatReader();
-    const mediaDevices = await navigator.mediaDevices.enumerateDevices();
-    const devices = mediaDevices.filter(d => d.kind === 'videoinput');
-    
-    const back = devices.find(d => /(back|rear|environment)/i.test(d.label)) || devices[devices.length - 1];
-    const deviceId = back ? back.deviceId : undefined;
-    
-    const video=document.getElementById('scanner-video');
-    await codeReader.decodeFromVideoDevice(deviceId,video,async(result,err)=>{
-      if(result){
-        const isbn=result.getText();
-        if(/^\d{9}[\dX]$|^\d{13}$/.test(isbn.replace(/-/g,''))){
-          setScanStatus('Found barcode: '+isbn,true);
-          await stopScanner();
-          await lookupISBN(isbn.replace(/-/g,''));
-        }
-      }
-    });
-    setScanStatus('Ready — aim at barcode',true);
-  }catch(e){
-    setScanStatus('Camera error: '+e.message,true);
+  setScanStatus('Starting lens configuration…');
+
+  Quagga.init({
+    inputStream: {
+      name: "Live",
+      type: "LiveStream",
+      target: document.querySelector('#scanner-container'),
+      constraints: {
+        width: 640,
+        height: 480,
+        facingMode: "environment"
+      },
+      singleChannel: false
+    },
+    locator: {
+      patchSize: "medium",
+      halfSample: true
+    },
+    numOfWorkers: navigator.hardwareConcurrency || 2,
+    decoder: {
+      readers: ["ean_reader"] // Directly matches standard retail book lines
+    },
+    locate: true
+  }, function(err) {
+    if (err) {
+      setScanStatus('Camera Access Error: ' + err.message, true);
+      return;
+    }
+    Quagga.start();
+    setScanStatus('Scanner Ready — Center Barcode', true);
+  });
+
+  Quagga.onDetected(onBarcodeRead);
+}
+
+let lastScanTime = 0;
+function onBarcodeRead(data) {
+  const now = Date.now();
+  if (now - lastScanTime < 2000) return; // Prevent double firing loops
+
+  if (data && data.codeResult && data.codeResult.code) {
+    const rawCode = data.codeResult.code;
+    // Validate formatting ranges matching general trade retail codes
+    if (/^(978|979|079)\d+/.test(rawCode) && rawCode.length >= 12) {
+      lastScanTime = now;
+      setScanStatus('Code verified: ' + rawCode, true);
+      stopScanner();
+      lookupISBN(rawCode);
+    }
   }
 }
 
-function setScanStatus(msg,show=false){
-  const el=document.getElementById('scan-status');
-  el.textContent=msg;
-  el.classList.toggle('show',show&&!!msg);
+function setScanStatus(msg, show = false) {
+  const el = document.getElementById('scan-status');
+  el.textContent = msg;
+  el.classList.toggle('show', show && !!msg);
 }
 
-async function stopScanner(){
-  if(codeReader){try{codeReader.reset()}catch(e){}}
-  codeReader=null;
-  const video=document.getElementById('scanner-video');
-  if(video.srcObject){video.srcObject.getTracks().forEach(t=>t.stop());video.srcObject=null;}
+function stopScanner() {
+  try {
+    Quagga.offDetected(onBarcodeRead);
+    Quagga.stop();
+  } catch(e) {}
+  document.getElementById('scanner-container').innerHTML = "";
   document.getElementById('scanner-overlay').classList.add('hidden');
 }
 
 async function lookupISBN(isbn){
-  toast('Looking up ISBN '+isbn+'…',4000);
-  scannedISBN=isbn;
+  toast('Querying reference logs for ' + isbn + '…', 4000);
+  scannedISBN = isbn;
   try{
-    const res=await fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}`);
-    const data=await res.json();
-    if(data.items&&data.items.length>0){
-      const info=data.items[0].volumeInfo;
-      const title=info.title+(info.subtitle?' — '+info.subtitle:'');
-      const rawPub=(info.publisher||'').toLowerCase();
-      let pub='Other';
-      if(/marvel/.test(rawPub))pub='Marvel';
-      else if(/dc\b|dc comics/.test(rawPub))pub='DC';
-      else if(/image/.test(rawPub))pub='Image';
-      else if(/dark horse/.test(rawPub))pub='Dark Horse';
-      openDrawer(null,{title,pub,isbn});
-    }else{
-      toast('ISBN not found — complete fields manually');
-      openDrawer(null,{isbn});
+    const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}`);
+    const data = await res.json();
+    if(data.items && data.items.length > 0){
+      const info = data.items[0].volumeInfo;
+      const title = info.title + (info.subtitle ? ' — ' + info.subtitle : '');
+      const rawPub = (info.publisher || '').toLowerCase();
+      let pub = 'Other';
+      if(/marvel/.test(rawPub)) pub = 'Marvel';
+      else if(/dc\b|dc comics/.test(rawPub)) pub = 'DC';
+      else if(/image/.test(rawPub)) pub = 'Image';
+      else if(/dark horse/.test(rawPub)) pub = 'Dark Horse';
+      openDrawer(null, {title, pub, isbn});
+    } else {
+      toast('Reference profile clean — fill info manually');
+      openDrawer(null, {isbn});
     }
-  }catch(e){
-    toast('Network timeout — complete fields manually');
-    openDrawer(null,{isbn});
+  } catch(e) {
+    toast('Network link quiet — completing profile entry manually');
+    openDrawer(null, {isbn});
   }
 }
 
-// --- DATA INPUT DRAWER ---
-let editingId=null;
-function openDrawer(id=null,prefill=null){
-  editingId=id;
-  const btn=document.getElementById('submit-btn');
-  const titleEl=document.getElementById('drawer-title');
-  const badge=document.getElementById('isbn-badge');
+// --- DATA MANAGEMENT DRAWER ---
+let editingId = null;
+function openDrawer(id = null, prefill = null){
+  editingId = id;
+  const btn = document.getElementById('submit-btn');
+  const titleEl = document.getElementById('drawer-title');
+  const badge = document.getElementById('isbn-badge');
 
   if(id){
-    const b=books.find(x=>x.id===id);if(!b)return;
-    document.getElementById('f-title').value=b.title;
-    document.getElementById('f-pub').value=b.pub;
-    document.getElementById('f-cond').value=b.cond||'NM';
-    document.getElementById('f-paid').value=b.paid||'';
-    document.getElementById('f-date').value=b.purchaseDate||'';
-    document.getElementById('f-read').value=b.readStatus||'unread';
-    document.getElementById('f-notes').value=b.notes||'';
-    badge.style.display='none';
-    titleEl.childNodes[0].textContent='EDIT BOOK ';
-    btn.textContent='SAVE CHANGES';
-    scannedISBN=b.isbn||null;
-  }else{
-    document.getElementById('f-title').value=prefill?.title||'';
-    document.getElementById('f-pub').value=prefill?.pub||'Marvel';
-    document.getElementById('f-cond').value='NM';
-    document.getElementById('f-paid').value='';
-    document.getElementById('f-date').value=new Date().toISOString().split('T')[0];
-    document.getElementById('f-read').value='unread';
-    document.getElementById('f-notes').value='';
+    const b = books.find(x => x.id === id); if(!b) return;
+    document.getElementById('f-title').value = b.title;
+    document.getElementById('f-pub').value = b.pub;
+    document.getElementById('f-cond').value = b.cond || 'NM';
+    document.getElementById('f-paid').value = b.paid || '';
+    document.getElementById('f-date').value = b.purchaseDate || '';
+    document.getElementById('f-read').value = b.readStatus || 'unread';
+    document.getElementById('f-notes').value = b.notes || '';
+    badge.style.display = 'none';
+    titleEl.childNodes[0].textContent = 'EDIT BOOK ';
+    btn.textContent = 'SAVE CHANGES';
+    scannedISBN = b.isbn || null;
+  } else {
+    document.getElementById('f-title').value = prefill?.title || '';
+    document.getElementById('f-pub').value = prefill?.pub || 'Marvel';
+    document.getElementById('f-cond').value = 'NM';
+    document.getElementById('f-paid').value = '';
+    document.getElementById('f-date').value = new Date().toISOString().split('T')[0];
+    document.getElementById('f-read').value = 'unread';
+    document.getElementById('f-notes').value = '';
     if(prefill?.isbn){
-      badge.textContent='ISBN '+prefill.isbn;badge.style.display='inline';
-      scannedISBN=prefill.isbn;
-    }else{badge.style.display='none';scannedISBN=null;}
-    titleEl.childNodes[0].textContent='ADD BOOK ';
-    btn.textContent='ADD TO VAULT';
+      badge.textContent = 'ISBN ' + prefill.isbn; badge.style.display = 'inline';
+      scannedISBN = prefill.isbn;
+    } else { badge.style.display = 'none'; scannedISBN = null; }
+    titleEl.childNodes[0].textContent = 'ADD BOOK ';
+    btn.textContent = 'ADD TO VAULT';
   }
   document.getElementById('overlay').classList.add('open');
   document.getElementById('drawer').classList.add('open');
-  setTimeout(()=>document.getElementById('f-title').focus(),350);
+  setTimeout(() => document.getElementById('f-title').focus(), 350);
 }
 
 function closeDrawer(){
@@ -360,98 +383,98 @@ function closeDrawer(){
 }
 
 function submitBook(){
-  const title=document.getElementById('f-title').value.trim();
-  if(!title){toast('Enter a title');return;}
-  const data={
-    title,pub:document.getElementById('f-pub').value,
-    cond:document.getElementById('f-cond').value,
-    paid:parseFloat(document.getElementById('f-paid').value)||0,
-    purchaseDate:document.getElementById('f-date').value,
-    readStatus:document.getElementById('f-read').value,
-    notes:document.getElementById('f-notes').value.trim(),
-    isbn:scannedISBN||null
+  const title = document.getElementById('f-title').value.trim();
+  if(!title){toast('Please provide a volume title'); return;}
+  const data = {
+    title, pub: document.getElementById('f-pub').value,
+    cond: document.getElementById('f-cond').value,
+    paid: parseFloat(document.getElementById('f-paid').value) || 0,
+    purchaseDate: document.getElementById('f-date').value,
+    readStatus: document.getElementById('f-read').value,
+    notes: document.getElementById('f-notes').value.trim(),
+    isbn: scannedISBN || null
   };
   if(editingId){
-    const idx=books.findIndex(x=>x.id===editingId);
-    if(idx!==-1)books[idx]={...books[idx],...data};
-    toast('Updated Successfully');
-  }else{
-    books.unshift({id:Date.now(),added:Date.now(),market:null,...data});
-    toast('Added to Vault');
+    const idx = books.findIndex(x => x.id === editingId);
+    if(idx !== -1) books[idx] = {...books[idx], ...data};
+    toast('Vault Records Updated');
+  } else {
+    books.unshift({id: Date.now(), added: Date.now(), market: null, ...data});
+    toast('Cataloged into Vault');
   }
-  closeDrawer();saveBooks();render();
+  closeDrawer(); saveBooks(); render();
 }
 
 function deleteBook(id){
-  if(!confirm('Remove this book from your collection?'))return;
-  books=books.filter(b=>b.id!==id);saveBooks();render();toast('Removed');
+  if(!confirm('Permanently remove this volume from your configuration?')) return;
+  books = books.filter(b => b.id !== id); saveBooks(); render(); toast('Archived');
 }
 
-// --- FILTERS & RENDER LOGIC ---
-function setFilter(el,val){
-  document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
-  el.classList.add('active');filterPub=val;render();
+// --- PRESENTATION LOGIC ---
+function setFilter(el, val){
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active'); filterPub = val; render();
 }
 
 function pubKey(pub){
-  return{Marvel:'marvel',DC:'dc',Image:'image','Dark Horse':'dh'}[pub]||'other';
+  return {Marvel: 'marvel', DC: 'dc', Image: 'image', 'Dark Horse': 'dh'}[pub] || 'other';
 }
 function readIcon(s){
-  if(s==='read')return{dot:'var(--success)',label:'Read'};
-  if(s==='reading')return{dot:'var(--accent)',label:'Reading'};
-  return{dot:'var(--border2)',label:'Unread'};
+  if(s === 'read') return {dot: 'var(--success)', label: 'Read'};
+  if(s === 'reading') return {dot: 'var(--accent)', label: 'Reading'};
+  return {dot: 'var(--border2)', label: 'Unread'};
 }
 
 function render(){
-  const sort=document.getElementById('sort-select').value;
-  let list=[...books];
-  if(filterPub==='__unread__')list=list.filter(b=>b.readStatus!=='read');
-  else if(filterPub)list=list.filter(b=>b.pub===filterPub);
-  if(sort==='title')list.sort((a,b)=>a.title.localeCompare(b.title));
-  else if(sort==='paid')list.sort((a,b)=>b.paid-a.paid);
-  else if(sort==='market')list.sort((a,b)=>(b.market||0)-(a.market||0));
-  else if(sort==='date')list.sort((a,b)=>(b.purchaseDate||'').localeCompare(a.purchaseDate||''));
-  else list.sort((a,b)=>b.added-a.added);
+  const sort = document.getElementById('sort-select').value;
+  let list = [...books];
+  if(filterPub === '__unread__') list = list.filter(b => b.readStatus !== 'read');
+  else if(filterPub) list = list.filter(b => b.pub === filterPub);
+  if(sort === 'title') list.sort((a, b) => a.title.localeCompare(b.title));
+  else if(sort === 'paid') list.sort((a, b) => b.paid - a.paid);
+  else if(sort === 'market') list.sort((a, b) => (b.market || 0) - (a.market || 0));
+  else if(sort === 'date') list.sort((a, b) => (b.purchaseDate || '').localeCompare(a.purchaseDate || ''));
+  else list.sort((a, b) => b.added - a.added);
 
-  const container=document.getElementById('list');
+  const container = document.getElementById('list');
   if(!list.length){
-    container.innerHTML=`<div class="empty"><div class="empty-icon">📚</div><div class="empty-text">${books.length?'No books match this filter.':'Your vault is empty.<br>Tap 📷 to scan a barcode or + to add manually.'}</div></div>`;
-  }else{
-    container.innerHTML=list.map(b=>{
-      const pk=pubKey(b.pub);
-      const rs=readIcon(b.readStatus||'unread');
-      const diff=b.market!==null?b.market-b.paid:null;
-      const diffColor=diff===null?'':`var(${diff>=0?'--success':'--danger'})`;
-      const diffStr=diff===null?'':`${diff>=0?'+':'-'}$${Math.abs(diff).toFixed(2)}`;
-      const dateStr=b.purchaseDate?new Date(b.purchaseDate+'T12:00:00').toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'';
+    container.innerHTML = `<div class="empty"><div class="empty-icon">📚</div><div class="empty-text">${books.length ? 'No logs match current filter criteria.' : 'Vault storage unpopulated.<br>Tap 📷 to scan a barcode or + to initialize manual cataloging.'}</div></div>`;
+  } else {
+    container.innerHTML = list.map(b => {
+      const pk = pubKey(b.pub);
+      const rs = readIcon(b.readStatus || 'unread');
+      const diff = b.market !== null ? b.market - b.paid : null;
+      const diffColor = diff === null ? '' : `var(${diff >= 0 ? '--success' : '--danger'})`;
+      const diffStr = diff === null ? '' : `${diff >= 0 ? '+' : '-'}$${Math.abs(diff).toFixed(2)}`;
+      const dateStr = b.purchaseDate ? new Date(b.purchaseDate + 'T12:00:00').toLocaleDateString('en-US', {month: 'short', day: 'numeric', year: 'numeric'}) : '';
       
       const ebayUrl = `https://www.ebay.com/sch/i.html?_nkw=${encodeURIComponent(b.title + ' ' + b.pub + ' omnibus')}&LH_Sold=1&LH_Complete=1`;
       
-      const priceBlock=b.market!==null
-        ?`<div class="price-market">$${b.market.toFixed(2)}</div><div class="price-diff" style="color:${diffColor}">${diffStr}</div>`
-        :`<a class="price-lookup-btn" href="${ebayUrl}" target="_blank">Look up ↗</a>`;
+      const priceBlock = b.market !== null
+        ? `<div class="price-market">$${b.market.toFixed(2)}</div><div class="price-diff" style="color:${diffColor}">${diffStr}</div>`
+        : `<a class="price-lookup-btn" href="${ebayUrl}" target="_blank">Look up ↗</a>`;
         
-      const isbnTag=b.isbn?`<span style="font-size:10px;color:var(--muted)">ISBN ${b.isbn}</span>`:'';
-      return`<div class="book-card pub-${pk}">
+      const isbnTag = b.isbn ? `<span style="font-size:10px;color:var(--muted)">ISBN ${b.isbn}</span>` : '';
+      return `<div class="book-card pub-${pk}">
   <div class="book-main">
     <div class="book-info">
       <div class="book-title">${escHtml(b.title)}</div>
       <div class="book-meta">
         <span class="pub-badge pub-${pk}">${b.pub}</span>
-        <span class="cond-badge">${b.cond||'NM'}</span>
+        <span class="cond-badge">${b.cond || 'NM'}</span>
         <span class="read-dot" style="background:${rs.dot}" title="${rs.label}"></span>
         <span style="font-size:10px;color:var(--muted)">${rs.label}</span>
         ${isbnTag}
       </div>
-      ${b.notes?`<div style="font-size:11px;color:var(--muted);margin-top:5px;font-style:italic">${escHtml(b.notes)}</div>`:''}
+      ${b.notes ? `<div style="font-size:11px;color:var(--muted);margin-top:5px;font-style:italic">${escHtml(b.notes)}</div>` : ''}
     </div>
     <div class="book-price-col">
-      ${b.paid>0?`<div class="price-paid">Paid $${b.paid.toFixed(2)}</div>`:'<div class="price-paid">No price</div>'}
+      ${b.paid > 0 ? `<div class="price-paid">Paid $${b.paid.toFixed(2)}</div>` : '<div class="price-paid">No price</div>'}
       ${priceBlock}
     </div>
   </div>
   <div class="book-footer">
-    <span class="date-tag">${dateStr||'No date'}</span>
+    <span class="date-tag">${dateStr || 'No date'}</span>
     <div class="book-actions">
       <button class="action-btn" onclick="openDrawer(${b.id})">Edit</button>
       <button class="action-btn del" onclick="deleteBook(${b.id})">Remove</button>
@@ -461,34 +484,34 @@ function render(){
     }).join('');
   }
 
-  const totalPaid=books.reduce((s,b)=>s+(b.paid||0),0);
-  const priced=books.filter(b=>b.market!==null);
-  const totalMarket=priced.reduce((s,b)=>s+b.market,0);
-  const readCount=books.filter(b=>b.readStatus==='read').length;
-  document.getElementById('stats').innerHTML=`
+  const totalPaid = books.reduce((s, b) => s + (b.paid || 0), 0);
+  const priced = books.filter(b => b.market !== null);
+  const totalMarket = priced.reduce((s, b) => s + b.market, 0);
+  const readCount = books.filter(b => b.readStatus === 'read').length;
+  document.getElementById('stats').innerHTML = `
     <div class="stat"><div class="stat-n">${books.length}</div><div class="stat-l">Books</div></div>
-    <div class="stat"><div class="stat-n">$${totalPaid<10000?totalPaid.toFixed(0):(totalPaid/1000).toFixed(1)+'k'}</div><div class="stat-l">Paid</div></div>
-    <div class="stat"><div class="stat-n" style="color:${totalMarket>0?'var(--success)':'var(--accent)'}">$${priced.length?(totalMarket<10000?totalMarket.toFixed(0):(totalMarket/1000).toFixed(1)+'k'):'—'}</div><div class="stat-l">Market</div></div>
+    <div class="stat"><div class="stat-n">$${totalPaid < 10000 ? totalPaid.toFixed(0) : (totalPaid / 1000).toFixed(1) + 'k'}</div><div class="stat-l">Paid</div></div>
+    <div class="stat"><div class="stat-n" style="color:${totalMarket > 0 ? 'var(--success)' : 'var(--accent)'}">$${priced.length ? (totalMarket < 10000 ? totalMarket.toFixed(0) : (totalMarket / 1000).toFixed(1) + 'k') : '—'}</div><div class="stat-l">Market</div></div>
     <div class="stat"><div class="stat-n">${readCount}</div><div class="stat-l">Read</div></div>`;
 }
 
 function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
 
 function exportCSV(){
-  if(!books.length){toast('Nothing to export');return;}
-  const rows=[['Title','Publisher','Condition','Paid','Market Price','Difference','Read Status','Purchase Date','ISBN','Notes']];
-  books.forEach(b=>{
-    const diff=b.market!==null?(b.market-b.paid).toFixed(2):'';
-    rows.push([`"${b.title.replace(/"/g,'""')}"`,b.pub,b.cond||'',b.paid.toFixed(2),b.market!==null?b.market.toFixed(2):'',diff,b.readStatus||'',b.purchaseDate||'',b.isbn||'',`"${(b.notes||'').replace(/"/g,'""')}"`]);
+  if(!books.length){toast('Nothing to export'); return;}
+  const rows = [['Title', 'Publisher', 'Condition', 'Paid', 'Market Price', 'Difference', 'Read Status', 'Purchase Date', 'ISBN', 'Notes']];
+  books.forEach(b => {
+    const diff = b.market !== null ? (b.market - b.paid).toFixed(2) : '';
+    rows.push([`"${b.title.replace(/"/g, '""')}"`, b.pub, b.cond || '', b.paid.toFixed(2), b.market !== null ? b.market.toFixed(2) : '', diff, b.readStatus || '', b.purchaseDate || '', b.isbn || '', `"${(b.notes || '').replace(/"/g, '""')}"`]);
   });
-  const csv=rows.map(r=>r.join(',')).join('\n');
-  const a=document.createElement('a');
-  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
-  a.download='omnibus_vault.csv';a.click();toast('CSV exported');
+  const csv = rows.map(r => r.join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download = 'omnibus_vault.csv'; a.click(); toast('CSV data exported');
 }
 
-if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
-loadBooks();render();
+if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+loadBooks(); render();
 </script>
 </body>
 </html>

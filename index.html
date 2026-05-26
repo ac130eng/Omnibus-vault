@@ -1,20 +1,16 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>Omnibus Vault</title>
+<script src="https://unpkg.com/html5-qrcode"></script>
 <style>
 :root{--bg:#0f0e0d;--bg2:#1a1917;--bg3:#242320;--border:rgba(255,255,255,0.08);--text:#f0ede8;--accent:#e8a230;--muted:#7a7773}
 body{background:var(--bg);color:var(--text);font-family:sans-serif;margin:0}
 .app{display:flex;flex-direction:column;height:100vh;max-width:480px;margin:0 auto}
 .topbar{padding:20px 16px;border-bottom:1px solid var(--border)}
 .logo{font-size:24px;color:var(--accent);font-weight:bold}
-.stats{display:grid;grid-template-columns:repeat(4,1fr);background:var(--bg2);padding:10px}
-.stat{text-align:center}
-.stat-n{color:var(--accent);font-size:18px}
-.stat-l{font-size:9px;color:var(--muted);text-transform:uppercase}
 .list{flex:1;overflow-y:auto;padding:16px}
 .fab{position:fixed;bottom:20px;right:20px;background:var(--accent);width:50px;height:50px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:24px;cursor:pointer;border:none}
 .drawer{position:fixed;bottom:0;width:100%;max-width:480px;background:var(--bg2);padding:20px;border-radius:16px 16px 0 0;transform:translateY(100%);transition:transform .3s;box-sizing:border-box}
@@ -22,23 +18,21 @@ body{background:var(--bg);color:var(--text);font-family:sans-serif;margin:0}
 .field{margin-bottom:15px}
 input{width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:10px;border-radius:4px;box-sizing:border-box}
 .lookup-btn{background:var(--bg3);border:1px solid var(--accent);color:var(--accent);padding:10px;width:100%;border-radius:4px;margin-bottom:10px;cursor:pointer}
+#reader{width: 100%; margin-bottom: 10px;}
 </style>
 </head>
 <body>
 <div class="app">
   <div class="topbar"><div class="logo">OMNIBUS VAULT</div></div>
-  <div class="stats">
-    <div class="stat"><div class="stat-n" id="stat-count">0</div><div class="stat-l">Books</div></div>
-    <div class="stat"><div class="stat-n">$0</div><div class="stat-l">Paid</div></div>
-    <div class="stat"><div class="stat-n">-</div><div class="stat-l">Market</div></div>
-    <div class="stat"><div class="stat-n">0</div><div class="stat-l">Read</div></div>
-  </div>
   <div class="list" id="list"></div>
 </div>
 
 <div class="fab" onclick="document.getElementById('drawer').classList.add('open')">+</div>
 
 <div class="drawer" id="drawer">
+  <div id="reader"></div>
+  <button class="lookup-btn" onclick="startScanner()">SCAN BARCODE</button>
+  
   <div class="field"><input placeholder="ISBN" id="f-isbn"></div>
   <button class="lookup-btn" onclick="lookupBook()">LOOKUP ISBN</button>
   <div class="field"><input placeholder="Title" id="f-title"></div>
@@ -46,50 +40,51 @@ input{width:100%;background:var(--bg3);border:1px solid var(--border);color:var(
 </div>
 
 <script>
-  var books = [];
-  var STORAGE_KEY = 'omnibus_vault_v2';
-  var API_KEY = '30f046987e90f2358dc14168e985fb44df9d9f22'; // Loaded from your verified key
+  var books = JSON.parse(localStorage.getItem('omnibus_vault_v2') || '[]');
+  var API_KEY = '30f046987e90f2358dc14168e985fb44df9d9f22';
+
+  // Scanner Logic
+  function startScanner() {
+    var html5QrCode = new Html5Qrcode("reader");
+    html5QrCode.start(
+      { facingMode: "environment" },
+      { fps: 10, qrbox: 250 },
+      (decodedText) => {
+        document.getElementById('f-isbn').value = decodedText;
+        html5QrCode.stop();
+        document.getElementById('reader').innerHTML = ''; // clear camera
+        lookupBook(); // auto lookup after scan
+      }
+    ).catch(err => alert("Camera Error: " + err));
+  }
 
   function lookupBook() {
     var isbn = document.getElementById('f-isbn').value.trim();
-    if(!isbn) { alert('Enter ISBN'); return; }
-    
     var url = 'https://comicvine.gamespot.com/api/issues/?api_key=' + API_KEY + '&format=json&filter=isbn:' + isbn;
-    
     fetch('https://api.allorigins.win/get?url=' + encodeURIComponent(url))
       .then(res => res.json())
       .then(data => {
         var json = JSON.parse(data.contents);
-        if(json.results && json.results.length > 0) {
-          document.getElementById('f-title').value = json.results[0].name;
-        } else {
-          alert('Not found');
-        }
-      })
-      .catch(e => alert('Error connecting to database'));
+        if(json.results && json.results.length > 0) document.getElementById('f-title').value = json.results[0].name;
+        else alert('Not found');
+      });
   }
 
   function submitBook() {
     var title = document.getElementById('f-title').value.trim();
-    if(!title) { alert('Enter a title'); return; }
-    books.unshift({ id: Date.now(), title: title });
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(books));
-    document.getElementById('f-title').value = '';
-    document.getElementById('f-isbn').value = '';
+    if(!title) return;
+    books.unshift({ title: title });
+    localStorage.setItem('omnibus_vault_v2', JSON.stringify(books));
     document.getElementById('drawer').classList.remove('open');
     render();
   }
 
   function render() {
-    var list = document.getElementById('list');
-    document.getElementById('stat-count').innerText = books.length;
-    list.innerHTML = books.map(b => 
+    document.getElementById('list').innerHTML = books.map(b => 
       '<div style="background:#1a1917;padding:15px;margin-bottom:8px;border-radius:4px;border-left:4px solid #e8a230">' + b.title + '</div>'
     ).join('');
   }
 
-  var d = localStorage.getItem(STORAGE_KEY);
-  if(d) books = JSON.parse(d);
   render();
 </script>
 </body>

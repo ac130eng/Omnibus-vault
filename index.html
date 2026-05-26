@@ -17,7 +17,8 @@ body{background:var(--bg);color:var(--text);font-family:sans-serif;margin:0}
 .drawer.open{transform:translateY(0)}
 .field{margin-bottom:15px}
 input{width:100%;background:var(--bg3);border:1px solid var(--border);color:var(--text);padding:10px;border-radius:4px;box-sizing:border-box}
-.lookup-btn{background:var(--bg3);border:1px solid var(--accent);color:var(--accent);padding:10px;width:100%;border-radius:4px;margin-bottom:10px;cursor:pointer}
+.btn-main{background:var(--accent);color:var(--bg);padding:10px;width:100%;border-radius:4px;border:none;margin-top:10px;font-weight:bold;cursor:pointer}
+.btn-sec{background:var(--bg3);border:1px solid var(--accent);color:var(--accent);padding:10px;width:100%;border-radius:4px;margin-bottom:10px;cursor:pointer}
 #reader{width: 100%; margin-bottom: 10px;}
 </style>
 </head>
@@ -31,43 +32,41 @@ input{width:100%;background:var(--bg3);border:1px solid var(--border);color:var(
 
 <div class="drawer" id="drawer">
   <div id="reader"></div>
-  <button class="lookup-btn" onclick="startScanner()">SCAN BARCODE</button>
-  
+  <button class="btn-sec" onclick="startScanner()">SCAN BARCODE</button>
   <div class="field"><input placeholder="ISBN" id="f-isbn"></div>
-  <button class="lookup-btn" onclick="lookupBook()">LOOKUP ISBN</button>
+  <button class="btn-sec" onclick="lookupBook()">LOOKUP ISBN</button>
   <div class="field"><input placeholder="Title" id="f-title"></div>
-  <button class="fab" style="position:static;width:100%;border-radius:4px" onclick="submitBook()">ADD BOOK</button>
+  <button class="btn-main" onclick="submitBook()">ADD BOOK</button>
 </div>
 
 <script>
   var books = JSON.parse(localStorage.getItem('omnibus_vault_v2') || '[]');
-  var API_KEY = '30f046987e90f2358dc14168e985fb44df9d9f22';
+  // API Key integrated
+  var API_KEY = '30f046987e90f2358dc14168e985fb44df9d9f22'; 
 
-  // Scanner Logic
   function startScanner() {
     var html5QrCode = new Html5Qrcode("reader");
-    html5QrCode.start(
-      { facingMode: "environment" },
-      { fps: 10, qrbox: 250 },
+    html5QrCode.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 },
       (decodedText) => {
         document.getElementById('f-isbn').value = decodedText;
         html5QrCode.stop();
-        document.getElementById('reader').innerHTML = ''; // clear camera
-        lookupBook(); // auto lookup after scan
+        document.getElementById('reader').innerHTML = '';
+        lookupBook();
       }
     ).catch(err => alert("Camera Error: " + err));
   }
 
   function lookupBook() {
     var isbn = document.getElementById('f-isbn').value.trim();
+    if(!isbn) { alert('Enter ISBN'); return; }
     var url = 'https://comicvine.gamespot.com/api/issues/?api_key=' + API_KEY + '&format=json&filter=isbn:' + isbn;
     fetch('https://api.allorigins.win/get?url=' + encodeURIComponent(url))
       .then(res => res.json())
       .then(data => {
         var json = JSON.parse(data.contents);
         if(json.results && json.results.length > 0) document.getElementById('f-title').value = json.results[0].name;
-        else alert('Not found');
-      });
+        else alert('Not found in database');
+      }).catch(e => alert('Connection error'));
   }
 
   function submitBook() {
@@ -75,6 +74,8 @@ input{width:100%;background:var(--bg3);border:1px solid var(--border);color:var(
     if(!title) return;
     books.unshift({ title: title });
     localStorage.setItem('omnibus_vault_v2', JSON.stringify(books));
+    document.getElementById('f-title').value = '';
+    document.getElementById('f-isbn').value = '';
     document.getElementById('drawer').classList.remove('open');
     render();
   }

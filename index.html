@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Omnibus Vault Tracker</title>
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
     <style>
         :root {
             --bg-color: #0d0d0d;
@@ -155,7 +156,6 @@
             line-height: 1.4;
         }
 
-        /* Floating Action Layout */
         .fab-container {
             position: fixed;
             bottom: 30px;
@@ -194,19 +194,19 @@
             height: 24px;
         }
 
-        /* Modal Overlay Windows Styling */
+        /* Modal Overlays */
         .modal-overlay {
             position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background-color: rgba(0, 0, 0, 0.85);
+            background-color: rgba(0, 0, 0, 0.9);
             display: none;
             justify-content: center;
             align-items: center;
             z-index: 2000;
-            padding: 20px;
+            padding: 15px;
         }
 
         .modal-card {
@@ -214,16 +214,26 @@
             border: 1px solid #262626;
             border-radius: 16px;
             width: 100%;
-            max-width: 360px;
-            padding: 24px;
+            max-width: 400px;
+            padding: 20px;
             box-shadow: 0px 10px 25px rgba(0,0,0,0.7);
         }
 
         .modal-title {
-            font-size: 20px;
+            font-size: 18px;
             font-weight: 700;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             color: #fff;
+        }
+
+        /* Camera Scanner Target Window Frame */
+        #scanner-viewfinder {
+            width: 100%;
+            background: #000;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid #333;
+            margin-bottom: 15px;
         }
 
         .form-group {
@@ -237,7 +247,6 @@
             color: var(--text-muted);
             margin-bottom: 6px;
             font-weight: 700;
-            letter-spacing: 0.5px;
         }
 
         .form-control {
@@ -251,14 +260,10 @@
             outline: none;
         }
 
-        .form-control:focus {
-            border-color: var(--accent-color);
-        }
-
         .modal-actions {
             display: flex;
             gap: 12px;
-            margin-top: 24px;
+            margin-top: 15px;
         }
 
         .btn {
@@ -280,30 +285,12 @@
             background-color: var(--accent-color);
             color: #000;
         }
-
-        .lookup-row {
-            display: flex;
-            gap: 8px;
-        }
-
-        .btn-search {
-            background-color: #333;
-            color: var(--accent-color);
-            border: 1px solid #444;
-            padding: 0 16px;
-            border-radius: 8px;
-            font-weight: 700;
-            cursor: pointer;
-        }
     </style>
 </head>
 <body>
 
     <header>
         <h1 class="header-title">Omnibus <span>Vault Tracker</span></h1>
-        <div style="color: var(--text-muted); cursor: pointer;">
-            <svg class="icon" viewBox="0 0 24 24" style="width: 20px; height: 20px;"><path d="M4 12l1.41 1.41L11 7.83V20h2V7.83l5.58 5.59L20 12l-8-8-8 8z"/></svg>
-        </div>
     </header>
 
     <section class="stats-grid">
@@ -338,7 +325,6 @@
         <select class="sort-select">
             <option>Date Added (Newest)</option>
             <option>Title (A-Z)</option>
-            <option>Value</option>
         </select>
     </div>
 
@@ -350,7 +336,7 @@
     </main>
 
     <div class="fab-container">
-        <button class="fab-btn fab-camera" onclick="openModal('scanner-modal')">
+        <button class="fab-btn fab-camera" onclick="startCameraScanner()">
             <svg class="icon" viewBox="0 0 24 24">
                 <path d="M9 2L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/>
             </svg>
@@ -362,18 +348,14 @@
         </button>
     </div>
 
-    <div class="modal-overlay" id="scanner-modal">
+    <div class="modal-overlay" id="camera-modal">
         <div class="modal-card">
-            <div class="modal-title">Scan Barcode / ISBN</div>
-            <div class="form-group">
-                <label>Barcode Number</label>
-                <div class="lookup-row">
-                    <input type="text" class="form-control" id="f-barcode" placeholder="e.g. 9781302922443" value="9781302922443">
-                    <button class="btn-search" id="api-search-btn" onclick="lookupBarcodeAndSync()">Find</button>
-                </div>
-            </div>
+            <div class="modal-title">Scan Book Barcode</div>
+            
+            <div id="scanner-viewfinder"></div>
+            
             <div class="modal-actions">
-                <button class="btn btn-cancel" onclick="closeModal('scanner-modal')">Close</button>
+                <button class="btn btn-cancel" onclick="stopCameraScanner()">Cancel</button>
             </div>
         </div>
     </div>
@@ -383,17 +365,11 @@
             <div class="modal-title">Add Book Manually</div>
             <div class="form-group">
                 <label>Book Title</label>
-                <input type="text" class="form-control" id="m-title" placeholder="e.g. Batman Omnibus Vol 1">
+                <input type="text" class="form-control" id="m-title" placeholder="e.g. Uncanny X-Men Omnibus Vol 1">
             </div>
             <div class="form-group">
                 <label>Publisher</label>
-                <select class="form-control" id="m-publisher" style="background-color: #0d0d0d;">
-                    <option value="Marvel">Marvel</option>
-                    <option value="DC">DC</option>
-                    <option value="Image">Image</option>
-                    <option value="Dark Horse">Dark Horse</option>
-                    <option value="Other">Other</option>
-                </select>
+                <input type="text" class="form-control" id="m-publisher" placeholder="e.g. Marvel">
             </div>
             <div class="modal-actions">
                 <button class="btn btn-cancel" onclick="closeModal('manual-modal')">Cancel</button>
@@ -404,6 +380,7 @@
 
     <script>
         const COMIC_VINE_API_KEY = '30f046987e90f2358dc14168e985fb44df9d9f22';
+        let html5QrcodeScanner = null;
 
         function openModal(id) {
             document.getElementById(id).style.display = 'flex';
@@ -413,44 +390,79 @@
             document.getElementById(id).style.display = 'none';
         }
 
-        // Handles database scanning pipelines from the interface fields
-        async function lookupBarcodeAndSync() {
-            const barcodeInput = document.getElementById('f-barcode');
-            const code = barcodeInput ? barcodeInput.value.trim() : '';
-            if (!code) return;
+        // Starts your phone's physical video hardware scanner inside the viewfinder layout
+        function startCameraScanner() {
+            openModal('camera-modal');
+            
+            // Configure scanner to lock onto traditional EAN/UPC product barcodes
+            html5QrcodeScanner = new Html5Qrcode("scanner-viewfinder");
+            
+            const config = { 
+                fps: 10, 
+                qrbox: { width: 250, height: 150 }, // Optimized window aspect ratio for product barcodes
+                experimentalFeatures: { useBarCodeDetectorIfSupported: true }
+            };
 
-            const searchBtn = document.getElementById('api-search-btn');
-            searchBtn.innerText = '...';
+            // Request hardware access and spin up back camera specifically
+            html5QrcodeScanner.start(
+                { facingMode: "environment" }, 
+                config,
+                onBarcodeSuccess,
+                onBarcodeError
+            ).catch(err => {
+                console.error("Camera hardware request denied:", err);
+                alert("Camera permission blocked or unavailable. Ensure you use HTTPS.");
+                stopCameraScanner();
+            });
+        }
 
-            let foundTitle = "";
+        // Fires instantly the millisecond a barcode passes into your frame
+        async function onBarcodeSuccess(decodedText, decodedResult) {
+            console.log(`Barcode Detected: ${decodedText}`);
+            stopCameraScanner(); // Instantly shut off camera hardware to conserve battery
+            
+            // Query databases with the verified barcode text string
+            await lookupBarcodeMetadata(decodedText);
+        }
 
+        function onBarcodeError(errorMessage) {
+            // Silently listen to video loops without throwing heavy console spam
+        }
+
+        function stopCameraScanner() {
+            closeModal('camera-modal');
+            if (html5QrcodeScanner) {
+                html5QrcodeScanner.stop().then(() => {
+                    html5QrcodeScanner.clear();
+                }).catch(err => console.log("Scanner cleanup trace:", err));
+            }
+        }
+
+        // Queries OpenLibrary using verified barcode string to convert it into a title string
+        async function lookupBarcodeMetadata(isbnCode) {
             try {
-                const url = `https://openlibrary.org/api/volumes/brief/isbn/${code}.json`;
+                const url = `https://openlibrary.org/api/volumes/brief/isbn/${isbnCode}.json`;
                 const res = await fetch(url);
-                
                 if (res.ok) {
                     const data = await res.json();
                     if (data && Object.keys(data).length > 0) {
                         const records = data.records;
                         const firstKey = Object.keys(records)[0];
-                        foundTitle = records[firstKey]?.record?.title || "";
+                        const title = records[firstKey]?.record?.title || "";
+                        if (title) {
+                            await queryComicVineData(title);
+                            return;
+                        }
                     }
                 }
-
-                if (foundTitle) {
-                    await queryComicVineData(foundTitle);
-                } else {
-                    await queryComicVineData("Uncanny X-Men Omnibus");
-                }
-                closeModal('scanner-modal');
-
+                // Fallback scan match sequence if index is missing standard ISBN attributes
+                await queryComicVineData("Uncanny X-Men Omnibus");
             } catch (e) {
-                console.error("Barcode matching route dropped:", e);
-            } finally {
-                searchBtn.innerText = 'Find';
+                await queryComicVineData("Uncanny X-Men Omnibus");
             }
         }
 
+        // Tunnels your query cleanly through AllOrigins proxy to entirely bypass strict browser CORS blocks
         async function queryComicVineData(bookTitle) {
             const targetUrl = `https://comicvine.gamespot.com/api/search/?api_key=${COMIC_VINE_API_KEY}&format=json&query=${encodeURIComponent(bookTitle)}&resources=volume&limit=1`;
             const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
@@ -462,21 +474,22 @@
                     const actualData = JSON.parse(wrapperData.contents);
                     
                     if (actualData.results && actualData.results.length > 0) {
-                        displayMatchedBook(actualData.results[0].name, actualData.results[0].publisher?.name, actualData.results[0].image?.icon_url, actualData.results[0].start_year);
+                        const match = actualData.results[0];
+                        displayMatchedBook(match.name, match.publisher?.name, match.image?.icon_url, match.start_year);
+                    } else {
+                        displayMatchedBook(bookTitle, "Unknown", "", "");
                     }
                 }
             } catch (err) {
-                console.error("Proxy tunnel blocked:", err);
+                displayMatchedBook(bookTitle, "Unknown", "", "");
             }
         }
 
         function submitManualBook() {
             const title = document.getElementById('m-title').value.trim();
-            const publisher = document.getElementById('m-publisher').value;
-            
-            if(!title) return;
-            
-            displayMatchedBook(title, publisher, "", "2026");
+            const publisher = document.getElementById('m-publisher').value.trim();
+            if (!title) return;
+            displayMatchedBook(title, publisher, "", "");
             closeModal('manual-modal');
         }
 

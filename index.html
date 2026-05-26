@@ -303,64 +303,31 @@ function manualISBN() {
   }
 }
 
-// ISBN LOOKUP
+// ISBN LOOKUP - Updated to use Google Books API
 function lookupISBN(isbn) {
   scannedISBN = isbn;
-  toast('Looking up ISBN ' + isbn + '...', 20000);
-  var prompt_text = 'Search the web for ISBN ' + isbn + ' and identify the comic book omnibus. Return only a JSON object with two fields: title (full book title) and publisher (must be one of: Marvel, DC, Image, Dark Horse, Other). Example response: {"title":"Daredevil Omnibus Vol. 4","publisher":"Marvel"}';
-  fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 300,
-      tools: [{ type: 'web_search_20250305', name: 'web_search' }],
-      system: 'You are a comic book lookup assistant. Always respond with ONLY a JSON object like {"title":"...","publisher":"..."} and nothing else.',
-      messages: [{ role: 'user', content: prompt_text }]
-    })
-  })
-  .then(function(res) { return res.json(); })
-  .then(function(data) {
-    var text = '';
-    if(data.content) {
-      for(var i = 0; i < data.content.length; i++) {
-        if(data.content[i].type === 'text') text += data.content[i].text;
-      }
-    }
-    var title = '';
-    var publisher = 'Marvel';
-    var m = text.match(/\{[^}]*"title"\s*:\s*"([^"]+)"[^}]*"publisher"\s*:\s*"([^"]+)"[^}]*\}/);
-    if(!m) m = text.match(/\{[^}]*"publisher"\s*:\s*"([^"]+)"[^}]*"title"\s*:\s*"([^"]+)"[^}]*\}/);
-    if(m) {
-      try {
-        var startIdx = text.indexOf('{');
-        var endIdx = text.lastIndexOf('}');
-        var jsonStr = text.substring(startIdx, endIdx + 1);
-        var parsed = JSON.parse(jsonStr);
-        title = parsed.title || '';
-        publisher = parsed.publisher || 'Marvel';
-      } catch(e) {
-        title = m[1] || m[2] || '';
-        publisher = m[2] || m[1] || 'Marvel';
-      }
-    }
-    openDrawer(null, { isbn: isbn });
-    setTimeout(function() {
-      if(title) {
+  toast('Looking up ISBN ' + isbn + '...', 2000);
+  
+  var url = 'https://www.googleapis.com/books/v1/volumes?q=isbn:' + isbn;
+  
+  fetch(url)
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+      if (data.totalItems > 0) {
+        var book = data.items[0].volumeInfo;
+        var title = book.title;
+        openDrawer(null, { isbn: isbn });
         document.getElementById('f-title').value = title;
-        var pubs = ['Marvel','DC','Image','Dark Horse','Other'];
-        if(pubs.indexOf(publisher) !== -1) document.getElementById('f-pub').value = publisher;
         toast('Found: ' + title, 3000);
       } else {
-        toast('Not found - enter title manually', 3000);
-        document.getElementById('f-title').focus();
+        toast('Not found - enter manually', 3000);
+        openDrawer(null, { isbn: isbn });
       }
-    }, 300);
-  })
-  .catch(function(e) {
-    toast('Lookup error - enter title manually', 3000);
-    openDrawer(null, { isbn: isbn });
-  });
+    })
+    .catch(function(e) {
+      toast('Lookup error - enter manually', 3000);
+      openDrawer(null, { isbn: isbn });
+    });
 }
 
 // DRAWER

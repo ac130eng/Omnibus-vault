@@ -301,9 +301,8 @@ function manualLookup() {
 
 async function lookupISBN(isbn){
   toast('Querying logs for ' + isbn + '…', 4000);
-  scannedISBN = isbn; // State set instantly
+  scannedISBN = isbn;
   
-  // Update the layout visual tracking fields right away before network requests start
   document.getElementById('f-lookup').value = isbn;
   const badge = document.getElementById('isbn-badge');
   if(badge) {
@@ -369,7 +368,6 @@ function openDrawer(id = null, prefill = null){
     document.getElementById('f-notes').value = '';
     lookupWrapper.style.display = 'block';
     
-    // Explicit override to clear visual bugs
     const finalISBN = prefill?.isbn || scannedISBN;
     if(finalISBN){
       scannedISBN = finalISBN;
@@ -401,7 +399,7 @@ function openDrawer(id = null, prefill = null){
 function closeDrawer(){
   document.getElementById('overlay').classList.remove('open');
   document.getElementById('drawer').classList.remove('open');
-  scannedISBN = null; // Clean out memory on close
+  scannedISBN = null;
 }
 
 function submitBook(){
@@ -432,7 +430,6 @@ function deleteBook(id){
   books = books.filter(b => b.id !== id); saveBooks(); render(); toast('Archived');
 }
 
-// --- PRESENTATION LOGIC ---
 function setFilter(el, val){
   document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
   el.classList.add('active'); filterPub = val; render();

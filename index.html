@@ -155,6 +155,7 @@
             line-height: 1.4;
         }
 
+        /* Floating Action Layout */
         .fab-container {
             position: fixed;
             bottom: 30px;
@@ -191,6 +192,108 @@
             fill: currentColor;
             width: 24px;
             height: 24px;
+        }
+
+        /* Modal Overlay Windows Styling */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.85);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            padding: 20px;
+        }
+
+        .modal-card {
+            background-color: #161616;
+            border: 1px solid #262626;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 360px;
+            padding: 24px;
+            box-shadow: 0px 10px 25px rgba(0,0,0,0.7);
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: #fff;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 11px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        .form-control {
+            width: 100%;
+            background-color: #0d0d0d;
+            border: 1px solid #262626;
+            border-radius: 8px;
+            padding: 12px;
+            color: #fff;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .form-control:focus {
+            border-color: var(--accent-color);
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 24px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 700;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-cancel {
+            background-color: #262626;
+            color: #fff;
+        }
+
+        .btn-submit {
+            background-color: var(--accent-color);
+            color: #000;
+        }
+
+        .lookup-row {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-search {
+            background-color: #333;
+            color: var(--accent-color);
+            border: 1px solid #444;
+            padding: 0 16px;
+            border-radius: 8px;
+            font-weight: 700;
+            cursor: pointer;
         }
     </style>
 </head>
@@ -246,31 +349,78 @@
         <p class="empty-state-text">No books found matching this group.</p>
     </main>
 
-    <input type="hidden" id="f-barcode" value="9781302922443">
-
     <div class="fab-container">
-        <button class="fab-btn fab-camera" id="scanner-action-btn" onclick="lookupBarcodeAndSync()">
+        <button class="fab-btn fab-camera" onclick="openModal('scanner-modal')">
             <svg class="icon" viewBox="0 0 24 24">
                 <path d="M9 2L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z"/>
             </svg>
         </button>
-        <button class="fab-btn fab-add">
+        <button class="fab-btn fab-add" onclick="openModal('manual-modal')">
             <svg class="icon" viewBox="0 0 24 24" style="width: 28px; height: 28px;">
                 <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
             </svg>
         </button>
     </div>
 
+    <div class="modal-overlay" id="scanner-modal">
+        <div class="modal-card">
+            <div class="modal-title">Scan Barcode / ISBN</div>
+            <div class="form-group">
+                <label>Barcode Number</label>
+                <div class="lookup-row">
+                    <input type="text" class="form-control" id="f-barcode" placeholder="e.g. 9781302922443" value="9781302922443">
+                    <button class="btn-search" id="api-search-btn" onclick="lookupBarcodeAndSync()">Find</button>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-cancel" onclick="closeModal('scanner-modal')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="manual-modal">
+        <div class="modal-card">
+            <div class="modal-title">Add Book Manually</div>
+            <div class="form-group">
+                <label>Book Title</label>
+                <input type="text" class="form-control" id="m-title" placeholder="e.g. Batman Omnibus Vol 1">
+            </div>
+            <div class="form-group">
+                <label>Publisher</label>
+                <select class="form-control" id="m-publisher" style="background-color: #0d0d0d;">
+                    <option value="Marvel">Marvel</option>
+                    <option value="DC">DC</option>
+                    <option value="Image">Image</option>
+                    <option value="Dark Horse">Dark Horse</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-cancel" onclick="closeModal('manual-modal')">Cancel</button>
+                <button class="btn btn-submit" onclick="submitManualBook()">Save Book</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         const COMIC_VINE_API_KEY = '30f046987e90f2358dc14168e985fb44df9d9f22';
 
+        function openModal(id) {
+            document.getElementById(id).style.display = 'flex';
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).style.display = 'none';
+        }
+
+        // Handles database scanning pipelines from the interface fields
         async function lookupBarcodeAndSync() {
             const barcodeInput = document.getElementById('f-barcode');
             const code = barcodeInput ? barcodeInput.value.trim() : '';
             if (!code) return;
 
-            const btn = document.getElementById('scanner-action-btn');
-            if (btn) btn.style.opacity = '0.5';
+            const searchBtn = document.getElementById('api-search-btn');
+            searchBtn.innerText = '...';
 
             let foundTitle = "";
 
@@ -292,11 +442,12 @@
                 } else {
                     await queryComicVineData("Uncanny X-Men Omnibus");
                 }
+                closeModal('scanner-modal');
 
             } catch (e) {
-                console.error("Lookup broken:", e);
+                console.error("Barcode matching route dropped:", e);
             } finally {
-                if (btn) btn.style.opacity = '1';
+                searchBtn.innerText = 'Find';
             }
         }
 
@@ -311,29 +462,37 @@
                     const actualData = JSON.parse(wrapperData.contents);
                     
                     if (actualData.results && actualData.results.length > 0) {
-                        displayMatchedBook(actualData.results[0]);
+                        displayMatchedBook(actualData.results[0].name, actualData.results[0].publisher?.name, actualData.results[0].image?.icon_url, actualData.results[0].start_year);
                     }
                 }
             } catch (err) {
-                console.error("Proxy query failed:", err);
+                console.error("Proxy tunnel blocked:", err);
             }
         }
 
-        function displayMatchedBook(volume) {
+        function submitManualBook() {
+            const title = document.getElementById('m-title').value.trim();
+            const publisher = document.getElementById('m-publisher').value;
+            
+            if(!title) return;
+            
+            displayMatchedBook(title, publisher, "", "2026");
+            closeModal('manual-modal');
+        }
+
+        function displayMatchedBook(name, publisher, imageSrc, startYear) {
             const vaultDisplay = document.getElementById('vault-display');
             if (!vaultDisplay) return;
             
-            const name = volume.name || "Unknown Volume";
-            const publisher = volume.publisher?.name || "Other";
-            const imageSrc = volume.image?.icon_url || "";
-            const startYear = volume.start_year || "";
+            const displayImg = imageSrc ? imageSrc : 'https://via.placeholder.com/60x90/222/fff?text=Book';
+            const cleanYear = startYear ? `(${startYear})` : '';
 
             vaultDisplay.innerHTML = `
                 <div style="background:#141414; padding:16px; border-radius:12px; border:1px solid #1f1f1f; width:90%; max-width:340px; text-align:left; display:flex; gap:15px; align-items:center; margin: 0 auto;">
-                    <img src="${imageSrc}" style="width:60px; height:90px; border-radius:6px; object-fit:cover; background:#222;" alt="Cover">
+                    <img src="${displayImg}" style="width:60px; height:90px; border-radius:6px; object-fit:cover; background:#222;" alt="Cover">
                     <div>
-                        <h4 style="margin:0 0 4px 0; font-size:16px; font-weight:700; color:#fff;">${name} (${startYear})</h4>
-                        <p style="margin:0; font-size:13px; color:#f1b83a; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">${publisher}</p>
+                        <h4 style="margin:0 0 4px 0; font-size:16px; font-weight:700; color:#fff;">${name} ${cleanYear}</h4>
+                        <p style="margin:0; font-size:13px; color:#f1b83a; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">${publisher || 'Other'}</p>
                     </div>
                 </div>
             `;

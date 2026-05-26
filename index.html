@@ -301,7 +301,7 @@ function manualLookup() {
 
 async function lookupISBN(isbn){
   toast('Querying logs for ' + isbn + '…', 4000);
-  scannedISBN = isbn;
+  scannedISBN = isbn; // Lock barcode into system memory immediately
   try{
     const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}`);
     const data = await res.json();
@@ -319,7 +319,6 @@ async function lookupISBN(isbn){
       openDrawer(null, {title, pub, isbn});
     } else {
       toast('Reference clean — write details manually');
-      // Put the successfully scanned numbers into the input field so you don't have to type it
       document.getElementById('f-lookup').value = isbn;
       openDrawer(null, {isbn, title: ''});
     }
@@ -363,8 +362,10 @@ function openDrawer(id = null, prefill = null){
     document.getElementById('f-notes').value = '';
     lookupWrapper.style.display = 'block';
     
-    if(prefill?.isbn){
-      scannedISBN = prefill.isbn;
+    // Check local prefill data or fallback directly to system state parameters
+    const finalISBN = prefill?.isbn || scannedISBN;
+    if(finalISBN){
+      scannedISBN = finalISBN;
       badge.textContent = 'ISBN ' + scannedISBN; 
       badge.style.display = 'inline';
     } else { 
@@ -377,12 +378,10 @@ function openDrawer(id = null, prefill = null){
   document.getElementById('overlay').classList.add('open');
   document.getElementById('drawer').classList.add('open');
   
-  // Smart focus transition
   setTimeout(() => {
-    if (prefill?.isbn && !prefill?.title) {
-      // Barcode scanned successfully but database was empty: jump directly to Title text line
+    if (scannedISBN && !document.getElementById('f-title').value) {
       document.getElementById('f-title').focus();
-    } else if(!prefill?.title && !id) {
+    } else if(!id) {
       document.getElementById('f-lookup').focus();
     } else {
       document.getElementById('f-title').focus();

@@ -369,7 +369,7 @@
             stopCameraScanner();
             document.getElementById('verify-status').innerText = "Searching global records...";
             
-            // Set intuitive defaults right away so fields never render blank
+            // Explicitly force string injection directly into targeted layout inputs
             document.getElementById('v-title').value = "Scanned Book (" + decodedText + ")";
             document.getElementById('v-publisher').value = "Unknown";
             document.getElementById('v-img').value = "";
@@ -437,11 +437,14 @@
 
         function handleFailedLookup(isbnFallback = "") {
             document.getElementById('verify-status').innerText = "Ready to add! Adjust info as needed:";
-            if (isbnFallback && document.getElementById('v-title').value.includes("Scanned Book")) {
-                document.getElementById('v-title').value = "Scanned Book (" + isbnFallback + ")";
+            const titleField = document.getElementById('v-title');
+            const pubField = document.getElementById('v-publisher');
+
+            if (isbnFallback && titleField.value.includes("Scanned Book")) {
+                titleField.value = "Scanned Book (" + isbnFallback + ")";
             }
-            if (!document.getElementById('v-publisher').value) {
-                document.getElementById('v-publisher').value = "Unknown";
+            if (!pubField.value || pubField.value === "") {
+                pubField.value = "Unknown";
             }
         }
 

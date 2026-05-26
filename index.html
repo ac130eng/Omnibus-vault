@@ -101,16 +101,6 @@
             font-weight: 700;
         }
 
-        .controls-bar {
-            display: flex;
-            justify-content: flex-end;
-            padding: 10px 20px;
-            align-items: center;
-            gap: 6px;
-            color: var(--text-muted);
-            font-size: 13px;
-        }
-
         /* Vault Book List Display Grid */
         .vault-container {
             display: flex;
@@ -143,7 +133,7 @@
             line-height: 1.4;
         }
 
-        /* Reusable Dynamic Book Cards */
+        /* Dynamic Book Cards */
         .book-card {
             background: #141414;
             padding: 16px;
@@ -260,7 +250,6 @@
         .btn-cancel { background-color: #262626; color: #fff; }
         .btn-submit { background-color: var(--accent-color); color: #000; }
         
-        /* Status message inside verification window */
         .status-msg { font-size: 13px; color: var(--accent-color); margin-bottom: 12px; text-align: center; font-weight: 600; }
     </style>
 </head>
@@ -351,11 +340,8 @@
     <script>
         const COMIC_VINE_API_KEY = '30f046987e90f2358dc14168e985fb44df9d9f22';
         let html5QrcodeScanner = null;
-        
-        // Array holding all book entries in local storage
         let vaultInventory = JSON.parse(localStorage.getItem('vaultInventory')) || [];
 
-        // Run immediately when page loads to pull existing entries out of memory
         window.onload = function() {
             renderInventoryList();
         };
@@ -374,22 +360,24 @@
                 onBarcodeSuccess,
                 () => {}
             ).catch(err => {
-                alert("Camera permission blocked. Ensure your browser address bar states HTTPS.");
+                alert("Camera permission blocked.");
                 stopCameraScanner();
             });
         }
 
-        async function onBarcodeSuccess(decodedText) {
+        function onBarcodeSuccess(decodedText) {
             stopCameraScanner();
-            document.getElementById('verify-status').innerText = "Searching global records for: " + decodedText;
+            document.getElementById('verify-status').innerText = "Searching indices for barcode...";
             
-            // Pop open verification card instantly so user sees it working
-            document.getElementById('v-title').value = "";
+            // Re-enable fields and populate default placeholder text right away
+            document.getElementById('v-title').removeAttribute('disabled');
+            document.getElementById('v-publisher').removeAttribute('disabled');
+            document.getElementById('v-title').value = "Scanned Book (" + decodedText + ")";
             document.getElementById('v-publisher').value = "";
             document.getElementById('v-img').value = "";
             openModal('verify-modal');
 
-            await lookupBarcodeMetadata(decodedText);
+            lookupBarcodeMetadata(decodedText);
         }
 
         function stopCameraScanner() {
@@ -399,13 +387,16 @@
             }
         }
 
-        // Search global indices
+        // Search indices safely using proxy overrides
         async function lookupBarcodeMetadata(isbnCode) {
             try {
-                const url = `https://openlibrary.org/api/volumes/brief/isbn/${isbnCode}.json`;
-                const res = await fetch(url);
+                const targetUrl = `https://openlibrary.org/api/volumes/brief/isbn/${isbnCode}.json`;
+                const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(targetUrl)}`;
+                
+                const res = await fetch(proxyUrl);
                 if (res.ok) {
-                    const data = await res.json();
+                    const wrapper = await res.json();
+                    const data = JSON.parse(wrapper.contents);
                     if (data && Object.keys(data).length > 0) {
                         const records = data.records;
                         const firstKey = Object.keys(records)[0];
@@ -434,7 +425,6 @@
                     
                     if (actualData.results && actualData.results.length > 0) {
                         const match = actualData.results[0];
-                        
                         document.getElementById('verify-status').innerText = "Match Found!";
                         document.getElementById('v-title').value = match.name + (match.start_year ? ` (${match.start_year})` : '');
                         document.getElementById('v-publisher').value = match.publisher?.name || "Unknown";
@@ -449,13 +439,12 @@
         }
 
         function handleFailedLookup(fallbackTitle = "") {
-            document.getElementById('verify-status').innerText = "Barcode lookup clean. Please confirm title details below:";
-            document.getElementById('v-title').value = fallbackTitle;
-            document.getElementById('v-publisher').value = "";
-            document.getElementById('v-img').value = "";
+            document.getElementById('verify-status').innerText = "Barcode scanned successfully! Verify details:";
+            if(fallbackTitle) {
+                document.getElementById('v-title').value = fallbackTitle;
+            }
         }
 
-        // Commits verified fields permanently into your inventory array
         function saveVerifiedBook() {
             const title = document.getElementById('v-title').value.trim();
             const publisher = document.getElementById('v-publisher').value.trim();
@@ -467,7 +456,7 @@
             }
 
             const newBook = {
-                id: Date.now(), // Unique code key to target for removals
+                id: Date.now(),
                 title: title,
                 publisher: publisher || 'Other',
                 image: image || ''
@@ -509,12 +498,10 @@
             renderInventoryList();
         }
 
-        // Refreshes the display and recalculates dashboard counter math on adjustments
         function renderInventoryList() {
             const vaultDisplay = document.getElementById('vault-display');
             const emptyWrapper = document.getElementById('empty-state-wrapper');
             
-            // Clean dynamic elements out before rebuild
             const oldCards = vaultDisplay.querySelectorAll('.book-card');
             oldCards.forEach(card => card.remove());
 
@@ -527,11 +514,9 @@
 
             if (emptyWrapper) emptyWrapper.style.display = 'none';
 
-            // Loop and build cards down the interface list
             vaultInventory.forEach(book => {
                 const card = document.createElement('div');
                 card.className = 'book-card';
-                
                 const coverUrl = book.image ? book.image : 'https://via.placeholder.com/60x90/222/fff?text=Book';
                 
                 card.innerHTML = `
@@ -545,7 +530,6 @@
                 vaultDisplay.appendChild(card);
             });
 
-            // Update stats layout math panel instantly
             document.getElementById('stat-books').innerText = vaultInventory.length;
             document.getElementById('stat-value').innerText = "$" + (vaultInventory.length * 125);
         }

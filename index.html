@@ -454,3 +454,41 @@ function render(){
     <span class="date-tag">${dateStr||'No date'}</span>
     <div class="book-actions">
       <button class="action-btn" onclick="openDrawer(${b.id})">Edit</button>
+      <button class="action-btn del" onclick="deleteBook(${b.id})">Remove</button>
+    </div>
+  </div>
+</div>`;
+    }).join('');
+  }
+
+  const totalPaid=books.reduce((s,b)=>s+(b.paid||0),0);
+  const priced=books.filter(b=>b.market!==null);
+  const totalMarket=priced.reduce((s,b)=>s+b.market,0);
+  const readCount=books.filter(b=>b.readStatus==='read').length;
+  document.getElementById('stats').innerHTML=`
+    <div class="stat"><div class="stat-n">${books.length}</div><div class="stat-l">Books</div></div>
+    <div class="stat"><div class="stat-n">$${totalPaid<10000?totalPaid.toFixed(0):(totalPaid/1000).toFixed(1)+'k'}</div><div class="stat-l">Paid</div></div>
+    <div class="stat"><div class="stat-n" style="color:${totalMarket>0?'var(--success)':'var(--accent)'}">$${priced.length?(totalMarket<10000?totalMarket.toFixed(0):(totalMarket/1000).toFixed(1)+'k'):'—'}</div><div class="stat-l">Market</div></div>
+    <div class="stat"><div class="stat-n">${readCount}</div><div class="stat-l">Read</div></div>`;
+}
+
+function escHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+
+function exportCSV(){
+  if(!books.length){toast('Nothing to export');return;}
+  const rows=[['Title','Publisher','Condition','Paid','Market Price','Difference','Read Status','Purchase Date','ISBN','Notes']];
+  books.forEach(b=>{
+    const diff=b.market!==null?(b.market-b.paid).toFixed(2):'';
+    rows.push([`"${b.title.replace(/"/g,'""')}"`,b.pub,b.cond||'',b.paid.toFixed(2),b.market!==null?b.market.toFixed(2):'',diff,b.readStatus||'',b.purchaseDate||'',b.isbn||'',`"${(b.notes||'').replace(/"/g,'""')}"`]);
+  });
+  const csv=rows.map(r=>r.join(',')).join('\n');
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download='omnibus_vault.csv';a.click();toast('CSV exported');
+}
+
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+loadBooks();render();
+</script>
+</body>
+</html>

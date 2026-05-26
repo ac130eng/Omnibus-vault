@@ -301,7 +301,16 @@ function manualLookup() {
 
 async function lookupISBN(isbn){
   toast('Querying logs for ' + isbn + '…', 4000);
-  scannedISBN = isbn; // Lock barcode into system memory immediately
+  scannedISBN = isbn; // State set instantly
+  
+  // Update the layout visual tracking fields right away before network requests start
+  document.getElementById('f-lookup').value = isbn;
+  const badge = document.getElementById('isbn-badge');
+  if(badge) {
+    badge.textContent = 'ISBN ' + isbn;
+    badge.style.display = 'inline';
+  }
+  
   try{
     const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}`);
     const data = await res.json();
@@ -319,12 +328,10 @@ async function lookupISBN(isbn){
       openDrawer(null, {title, pub, isbn});
     } else {
       toast('Reference clean — write details manually');
-      document.getElementById('f-lookup').value = isbn;
       openDrawer(null, {isbn, title: ''});
     }
   } catch(e) {
     toast('Network timed out — completing profile manually');
-    document.getElementById('f-lookup').value = isbn;
     openDrawer(null, {isbn, title: ''});
   }
 }
@@ -362,14 +369,16 @@ function openDrawer(id = null, prefill = null){
     document.getElementById('f-notes').value = '';
     lookupWrapper.style.display = 'block';
     
-    // Check local prefill data or fallback directly to system state parameters
+    // Explicit override to clear visual bugs
     const finalISBN = prefill?.isbn || scannedISBN;
     if(finalISBN){
       scannedISBN = finalISBN;
-      badge.textContent = 'ISBN ' + scannedISBN; 
+      document.getElementById('f-lookup').value = finalISBN;
+      badge.textContent = 'ISBN ' + finalISBN; 
       badge.style.display = 'inline';
     } else { 
       badge.style.display = 'none'; 
+      document.getElementById('f-lookup').value = '';
       scannedISBN = null; 
     }
     titleEl.childNodes[0].textContent = 'ADD BOOK ';
@@ -392,6 +401,7 @@ function openDrawer(id = null, prefill = null){
 function closeDrawer(){
   document.getElementById('overlay').classList.remove('open');
   document.getElementById('drawer').classList.remove('open');
+  scannedISBN = null; // Clean out memory on close
 }
 
 function submitBook(){

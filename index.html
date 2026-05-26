@@ -367,13 +367,11 @@
 
         function onBarcodeSuccess(decodedText) {
             stopCameraScanner();
-            document.getElementById('verify-status').innerText = "Searching indices for barcode...";
+            document.getElementById('verify-status').innerText = "Searching global records...";
             
-            // Re-enable fields and populate default placeholder text right away
-            document.getElementById('v-title').removeAttribute('disabled');
-            document.getElementById('v-publisher').removeAttribute('disabled');
+            // Set intuitive defaults right away so fields never render blank
             document.getElementById('v-title').value = "Scanned Book (" + decodedText + ")";
-            document.getElementById('v-publisher').value = "";
+            document.getElementById('v-publisher').value = "Unknown";
             document.getElementById('v-img').value = "";
             openModal('verify-modal');
 
@@ -387,7 +385,6 @@
             }
         }
 
-        // Search indices safely using proxy overrides
         async function lookupBarcodeMetadata(isbnCode) {
             try {
                 const targetUrl = `https://openlibrary.org/api/volumes/brief/isbn/${isbnCode}.json`;
@@ -407,9 +404,9 @@
                         }
                     }
                 }
-                handleFailedLookup();
+                handleFailedLookup(isbnCode);
             } catch (e) {
-                handleFailedLookup();
+                handleFailedLookup(isbnCode);
             }
         }
 
@@ -432,16 +429,19 @@
                         return;
                     }
                 }
-                handleFailedLookup(bookTitle);
+                handleFailedLookup();
             } catch (err) {
-                handleFailedLookup(bookTitle);
+                handleFailedLookup();
             }
         }
 
-        function handleFailedLookup(fallbackTitle = "") {
-            document.getElementById('verify-status').innerText = "Barcode scanned successfully! Verify details:";
-            if(fallbackTitle) {
-                document.getElementById('v-title').value = fallbackTitle;
+        function handleFailedLookup(isbnFallback = "") {
+            document.getElementById('verify-status').innerText = "Ready to add! Adjust info as needed:";
+            if (isbnFallback && document.getElementById('v-title').value.includes("Scanned Book")) {
+                document.getElementById('v-title').value = "Scanned Book (" + isbnFallback + ")";
+            }
+            if (!document.getElementById('v-publisher').value) {
+                document.getElementById('v-publisher').value = "Unknown";
             }
         }
 
